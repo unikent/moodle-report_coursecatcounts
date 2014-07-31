@@ -16,11 +16,11 @@
 
 require_once(dirname(__FILE__) . '/../../config.php');
 
-admin_externalpage_setup('coursecatCOUNTsreport', '', null, '', array(
+admin_externalpage_setup('coursecatcountsreport', '', null, '', array(
     'pagelayout' => 'report'
 ));
 
-
+// This is the SQL this report needs to replace.
 $sql = <<<SQL
     SELECT period, CONCAT(REPEAT('---',
     	LENGTH(
