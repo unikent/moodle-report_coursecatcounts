@@ -15,6 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 require_once(dirname(__FILE__) . '/../../config.php');
+require_once($CFG->libdir . '/adminlib.php');
 
 admin_externalpage_setup('coursecatcountsreport', '', null, '', array(
     'pagelayout' => 'report'
