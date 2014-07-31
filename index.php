@@ -207,4 +207,10 @@ $sql = <<<SQL
     GROUP BY period, cco.path
 SQL;
 
-// Do stuff.
+
+echo $OUTPUT->header();
+echo $OUTPUT->heading("Category-Based Course Report");
+
+echo \html_writer::tag('p', 'Currently Under Development.');
+
+echo $OUTPUT->footer();
