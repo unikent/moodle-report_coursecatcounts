@@ -184,20 +184,20 @@ $sql = <<<SQL
 
     LEFT OUTER JOIN (
         SELECT
-        e.courseid,
-        COUNT(*) cnt,
-        SUM (
-            CASE e.status WHEN 1
-                THEN 1
-                ELSE 0
-            END
-        ) statcnt,
-        SUM (
-            CASE WHEN e.password <> ''
-                THEN 1
-                ELSE 0
-            END
-        ) keycnt
+	        e.courseid,
+	        COUNT(*) cnt,
+	        SUM (
+	            CASE e.status WHEN 1
+	                THEN 1
+	                ELSE 0
+	            END
+	        ) statcnt,
+	        SUM (
+	            CASE WHEN e.password <> ''
+	                THEN 1
+	                ELSE 0
+	            END
+	        ) keycnt
         FROM {enrol} e
             WHERE enrol = 'guest'
         GROUP BY e.courseid
