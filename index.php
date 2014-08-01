@@ -21,6 +21,8 @@ admin_externalpage_setup('coursecatcountsreport', '', null, '', array(
     'pagelayout' => 'report'
 ));
 
+$renderer = $PAGE->get_renderer('report_coursecatcounts');
+
 // This is the SQL this report needs to replace.
 $sql = <<<SQL
     SELECT period, CONCAT(REPEAT('---',
@@ -185,20 +187,20 @@ $sql = <<<SQL
 
     LEFT OUTER JOIN (
         SELECT
-	        e.courseid,
-	        COUNT(*) cnt,
-	        SUM (
-	            CASE e.status WHEN 1
-	                THEN 1
-	                ELSE 0
-	            END
-	        ) statcnt,
-	        SUM (
-	            CASE WHEN e.password <> ''
-	                THEN 1
-	                ELSE 0
-	            END
-	        ) keycnt
+            e.courseid,
+            COUNT(*) cnt,
+            SUM (
+                CASE e.status WHEN 1
+                    THEN 1
+                    ELSE 0
+                END
+            ) statcnt,
+            SUM (
+                CASE WHEN e.password <> ''
+                    THEN 1
+                    ELSE 0
+                END
+            ) keycnt
         FROM {enrol} e
             WHERE enrol = 'guest'
         GROUP BY e.courseid
@@ -213,6 +215,38 @@ echo $OUTPUT->header();
 echo $OUTPUT->heading("Category-Based Course Report");
 
 $form = new \report_coursecatcounts\forms\date_select();
-$form->display();
+$data = $form->get_data();
+
+// Sanity check.
+if ($data) {
+    $startdate = (object)$data->startdate;
+    $startdate = strtotime("{$startdate->day}/{$startdate->month}/{$startdate->year}");
+
+    $enddate = (object)$data->enddate;
+    $enddate = strtotime("{$enddate->day}/{$enddate->month}/{$enddate->year}");
+
+    if (!$startdate) {
+        echo $OUTPUT->notification("Invalid start date!");
+        $data = false;
+    }
+
+    if (!$enddate) {
+        echo $OUTPUT->notification("Invalid end date!");
+        $data = false;
+    }
+
+    if ($startdate > $enddate || $startdate == $enddate) {
+        echo $OUTPUT->notification("End date must be greater than start date!");
+        $data = false;
+    }
+
+    if ($data) {
+        echo $renderer->run_report($startdate, $enddate);
+    }
+}
+
+if (!$data) {
+    $form->display();
+}
 
 echo $OUTPUT->footer();
