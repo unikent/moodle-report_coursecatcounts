@@ -212,6 +212,7 @@ SQL;
 echo $OUTPUT->header();
 echo $OUTPUT->heading("Category-Based Course Report");
 
-echo \html_writer::tag('p', 'Currently Under Development.');
+$form = new \report_coursecatcounts\forms\date_select();
+$form->display();
 
 echo $OUTPUT->footer();
