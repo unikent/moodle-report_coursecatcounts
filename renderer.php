@@ -84,97 +84,96 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
 
         $sql = <<<SQL
         SELECT
-        cco.path,
-        cco.name,
-        COUNT(c.id) total_from_course,
+            cco.path,
+            cco.name,
+            COUNT(c.id) total_from_course,
 
-        SUM(
-            CASE WHEN (stud.cnt < 2 OR stud.cnt IS NULL)
-                THEN 1
-                ELSE 0
-            END
-        ) ceased,
+            SUM(
+                CASE WHEN (stud.cnt < 2 OR stud.cnt IS NULL)
+                    THEN 1
+                    ELSE 0
+                END
+            ) ceased,
 
-        COUNT(c.id) - SUM(
-            CASE WHEN (stud.cnt < 2 OR stud.cnt IS NULL)
-                THEN 1
-                ELSE 0
-            END
-        ) total,
-
-        SUM(
-            CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
-            AND mods.cnt > 0
-            AND mods.cnt2 > 0
-            AND c.visible=1
-                THEN 1
-                ELSE 0
-            END
-        ) active,
-
-        SUM(
-            CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
-            AND mods.cnt > 0 AND mods.cnt2 > 0 AND c.visible=0
-                THEN 1
-                ELSE 0
-            END
-        ) resting,
-
-        SUM(
-            CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
-            AND (mods.cnt < 1 OR mods.cnt IS NULL)
-            AND (mods.cnt2 < 1 OR mods.cnt2 IS NULL)
-                THEN 1
-                ELSE 0
-            END
-        ) inactive,
-
-        SUM(
-            CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
-            AND mods.cnt > 0
-            AND mods.cnt2 > 0
-            AND c.visible = 1
-                THEN 1
-                ELSE 0
-            END
-        ) * 100 / (
             COUNT(c.id) - SUM(
                 CASE WHEN (stud.cnt < 2 OR stud.cnt IS NULL)
                     THEN 1
                     ELSE 0
                 END
-            )
-        ) per_c_active,
+            ) total,
 
-        SUM(
-            CASE WHEN en.statcnt > 0
-                THEN 1
-                ELSE 0
-            END
-        ) guest,
+            SUM(
+                CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
+                AND mods.cnt > 0
+                AND mods.cnt2 > 0
+                AND c.visible=1
+                    THEN 1
+                    ELSE 0
+                END
+            ) active,
 
-        SUM(
-            CASE WHEN en.keycnt > 0
-                THEN 1
-                ELSE 0
-            END
-        ) keyed,
+            SUM(
+                CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
+                AND mods.cnt > 0 AND mods.cnt2 > 0 AND c.visible=0
+                    THEN 1
+                    ELSE 0
+                END
+            ) resting,
 
-        SUM(
-            CASE WHEN en.statcnt > 0
-                THEN 1
-                ELSE 0
-            END
-        ) * 100 / SUM(
-            CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
-            AND mods.cnt > 0
-            AND mods.cnt2 > 0
-            AND c.visible = 1
-                THEN 1
-                ELSE 0
-            END
-        ) per_c_guest
+            SUM(
+                CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
+                AND (mods.cnt < 1 OR mods.cnt IS NULL)
+                AND (mods.cnt2 < 1 OR mods.cnt2 IS NULL)
+                    THEN 1
+                    ELSE 0
+                END
+            ) inactive,
 
+            SUM(
+                CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
+                AND mods.cnt > 0
+                AND mods.cnt2 > 0
+                AND c.visible = 1
+                    THEN 1
+                    ELSE 0
+                END
+            ) * 100 / (
+                COUNT(c.id) - SUM(
+                    CASE WHEN (stud.cnt < 2 OR stud.cnt IS NULL)
+                        THEN 1
+                        ELSE 0
+                    END
+                )
+            ) per_c_active,
+
+            SUM(
+                CASE WHEN en.statcnt > 0
+                    THEN 1
+                    ELSE 0
+                END
+            ) guest,
+
+            SUM(
+                CASE WHEN en.keycnt > 0
+                    THEN 1
+                    ELSE 0
+                END
+            ) keyed,
+
+            SUM(
+                CASE WHEN en.statcnt > 0
+                    THEN 1
+                    ELSE 0
+                END
+            ) * 100 / SUM(
+                CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
+                AND mods.cnt > 0
+                AND mods.cnt2 > 0
+                AND c.visible = 1
+                    THEN 1
+                    ELSE 0
+                END
+            ) per_c_guest
         FROM {course} c
 
         RIGHT OUTER JOIN {course_categories} cc
