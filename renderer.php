@@ -80,6 +80,154 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
      * Returns data for the table.
      */
     public function get_data($startdate, $enddate) {
+        // This is the SQL this report needs to replace.
+        $sql = <<<SQL
+        SELECT
+        cco.path,
+        cco.name,
+        COUNT(c.id) total_from_course,
+
+        SUM(
+            CASE WHEN (stud.cnt < 2 OR stud.cnt IS NULL)
+                THEN 1
+                ELSE 0
+            END
+        ) Ceased,
+
+        COUNT(c.id) - SUM(
+            CASE WHEN (stud.cnt < 2 OR stud.cnt IS NULL)
+                THEN 1
+                ELSE 0
+            END
+        ) Total,
+
+        SUM(
+            CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
+            AND mods.cnt > 0
+            AND mods.cnt2 > 0
+            AND c.visible=1
+                THEN 1
+                ELSE 0
+            END
+        ) Active,
+
+        SUM(
+            CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
+            AND mods.cnt > 0 AND mods.cnt2 > 0 AND c.visible=0
+                THEN 1
+                ELSE 0
+            END
+        ) Resting,
+
+        SUM(
+            CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
+            AND (mods.cnt < 1 OR mods.cnt IS NULL)
+            AND (mods.cnt2 < 1 OR mods.cnt2 IS NULL)
+                THEN 1
+                ELSE 0
+            END
+        ) Inactive,
+
+        SUM(
+            CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
+            AND mods.cnt > 0
+            AND mods.cnt2 > 0
+            AND c.visible=1
+                THEN 1
+                ELSE 0
+            END
+        ) * 100 / (
+            COUNT(c.id) - SUM(
+                CASE WHEN (stud.cnt < 2 OR stud.cnt IS NULL)
+                    THEN 1
+                    ELSE 0
+                END
+            )
+        ) per_c_active,
+
+        SUM(
+            CASE WHEN en.statcnt>0
+                THEN 1
+                ELSE 0
+            END
+        ) Guest,
+
+        SUM(
+            CASE WHEN en.keycnt>0
+                THEN 1
+                ELSE 0
+            END
+        ) Keyed,
+
+        SUM(
+            CASE WHEN en.statcnt>0
+                THEN 1
+                ELSE 0
+            END
+        ) * 100 / SUM(
+            CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL) AND mods.cnt > 0 AND mods.cnt2 > 0 AND c.visible = 1
+                THEN 1
+                ELSE 0
+            END
+        ) per_c_guest
+
+        FROM {course} c
+
+        RIGHT OUTER JOIN {course_categories} cc
+            ON c.category = cc.id
+
+        RIGHT OUTER JOIN {course_categories} cco
+            ON CONCAT(cc.path,'/') LIKE CONCAT(cco.path, '/%')
+
+        LEFT OUTER JOIN (
+            SELECT e.courseid, COUNT(*) cnt
+                FROM {user_enrolments} ue
+            JOIN {enrol} e
+                ON ue.enrolid = e.id
+            JOIN {role} r
+                ON e.roleid = r.id
+            WHERE r.shortname in ('student', 'sds_student')
+            GROUP BY courseid
+        ) stud
+            ON stud.courseid = c.id
+
+        LEFT OUTER JOIN (
+            SELECT cm.course courseid, COUNT(*) cnt, COUNT(DISTINCT cm.module) cnt2
+                FROM {course_modules} cm
+            LEFT OUTER JOIN {course} c
+                ON (c.timecreated BETWEEN cm.added - 120 and cm.added + 120)
+                AND c.id = cm.course
+            WHERE c.id IS NULL
+            GROUP BY cm.course
+        ) mods
+            ON mods.courseid = c.id
+
+        LEFT OUTER JOIN (
+            SELECT
+                e.courseid,
+                COUNT(*) cnt,
+                SUM (
+                    CASE e.status WHEN 1
+                        THEN 1
+                        ELSE 0
+                    END
+                ) statcnt,
+                SUM (
+                    CASE WHEN e.password <> ''
+                        THEN 1
+                        ELSE 0
+                    END
+                ) keycnt
+            FROM {enrol} e
+                WHERE enrol = 'guest'
+            GROUP BY e.courseid
+        ) en
+            ON en.courseid = c.id
+
+        WHERE c.startdate BETWEEN :startdate and :enddate
+
+        GROUP BY cco.path
+SQL;
         return array();
     }
 }
