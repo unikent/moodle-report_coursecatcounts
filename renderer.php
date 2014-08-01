@@ -58,8 +58,10 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
 
         $data = $this->get_data($startdate, $enddate);
         foreach ($data as $row) {
+            $category = str_pad($row->name, substr_count($row->path, 1), '-');
+
             $table->data[] = new html_table_row(array(
-                new html_table_cell($row->name),
+                new html_table_cell($category),
                 new html_table_cell($row->total_from_course),
                 new html_table_cell($row->ceased),
                 new html_table_cell($row->total),
@@ -209,13 +211,13 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
             SELECT
                 e.courseid,
                 COUNT(*) cnt,
-                SUM (
+                SUM(
                     CASE e.status WHEN 1
                         THEN 1
                         ELSE 0
                     END
                 ) statcnt,
-                SUM (
+                SUM(
                     CASE WHEN e.password <> ''
                         THEN 1
                         ELSE 0
