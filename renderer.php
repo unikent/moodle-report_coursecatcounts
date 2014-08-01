@@ -59,7 +59,7 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
         $data = $this->get_data($startdate, $enddate);
         foreach ($data as $row) {
             $table->data[] = new html_table_row(array(
-                new html_table_cell($row->category),
+                new html_table_cell($row->name),
                 new html_table_cell($row->total_from_course),
                 new html_table_cell($row->ceased),
                 new html_table_cell($row->total),
@@ -80,7 +80,8 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
      * Returns data for the table.
      */
     public function get_data($startdate, $enddate) {
-        // This is the SQL this report needs to replace.
+        global $DB;
+
         $sql = <<<SQL
         SELECT
         cco.path,
@@ -92,14 +93,14 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
                 THEN 1
                 ELSE 0
             END
-        ) Ceased,
+        ) ceased,
 
         COUNT(c.id) - SUM(
             CASE WHEN (stud.cnt < 2 OR stud.cnt IS NULL)
                 THEN 1
                 ELSE 0
             END
-        ) Total,
+        ) total,
 
         SUM(
             CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
@@ -109,7 +110,7 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
                 THEN 1
                 ELSE 0
             END
-        ) Active,
+        ) active,
 
         SUM(
             CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
@@ -117,7 +118,7 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
                 THEN 1
                 ELSE 0
             END
-        ) Resting,
+        ) resting,
 
         SUM(
             CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
@@ -126,13 +127,13 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
                 THEN 1
                 ELSE 0
             END
-        ) Inactive,
+        ) inactive,
 
         SUM(
             CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
             AND mods.cnt > 0
             AND mods.cnt2 > 0
-            AND c.visible=1
+            AND c.visible = 1
                 THEN 1
                 ELSE 0
             END
@@ -146,26 +147,29 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
         ) per_c_active,
 
         SUM(
-            CASE WHEN en.statcnt>0
+            CASE WHEN en.statcnt > 0
                 THEN 1
                 ELSE 0
             END
-        ) Guest,
+        ) guest,
 
         SUM(
-            CASE WHEN en.keycnt>0
+            CASE WHEN en.keycnt > 0
                 THEN 1
                 ELSE 0
             END
-        ) Keyed,
+        ) keyed,
 
         SUM(
-            CASE WHEN en.statcnt>0
+            CASE WHEN en.statcnt > 0
                 THEN 1
                 ELSE 0
             END
         ) * 100 / SUM(
-            CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL) AND mods.cnt > 0 AND mods.cnt2 > 0 AND c.visible = 1
+            CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
+            AND mods.cnt > 0
+            AND mods.cnt2 > 0
+            AND c.visible = 1
                 THEN 1
                 ELSE 0
             END
@@ -225,9 +229,12 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
             ON en.courseid = c.id
 
         WHERE c.startdate BETWEEN :startdate and :enddate
-
         GROUP BY cco.path
 SQL;
-        return array();
+
+        return $DB->get_records_sql($sql, array(
+            'startdate' => $startdate,
+            'enddate' => $enddate
+        ));
     }
 }
