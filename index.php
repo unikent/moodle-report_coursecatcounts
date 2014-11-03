@@ -40,10 +40,15 @@ echo $OUTPUT->heading("Category-Based Course Report");
 if (!$form->is_submitted()) {
     $startdate = optional_param('startdate', 0, PARAM_INT);
     $enddate = optional_param('enddate', 0, PARAM_INT);
+    $category = optional_param('category', false, PARAM_INT);
 
     // If we dont have a start date or an end date, we cannot continue.
     if ($startdate > 0 && $enddate > 0 && $startdate < $enddate) {
-        echo $renderer->run_report($startdate, $enddate);
+        if (!$category) {
+            echo $renderer->run_global_report($startdate, $enddate);
+        } else {
+            echo $renderer->run_category_report($category, $startdate, $enddate);
+        }
 
         $form->set_from_time($startdate, $enddate);
     }

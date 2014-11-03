@@ -36,7 +36,7 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
      *
      * @return string HTML to output.
      */
-    public function run_report($startdate, $enddate) {
+    public function run_global_report($startdate, $enddate) {
         global $DB;
 
         $table = new html_table();
@@ -61,7 +61,9 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
             $category = str_pad($row->name, substr_count($row->path, 1), '-');
             $category = \html_writer::tag('a', $category, array(
                 'href' => new \moodle_url('/report/coursecatcounts/index.php', array(
-                    'category' => $row->categoryid
+                    'category' => $row->categoryid,
+                    'startdate' => $startdate,
+                    'enddate' => $enddate
                 ))
             ));
 
@@ -247,15 +249,50 @@ SQL;
             'enddate' => $enddate
         ));
     }
+    /**
+     * This function will render a table.
+     *
+     * @return string HTML to output.
+     */
+    public function run_category_report($categoryid, $startdate, $enddate) {
+        global $DB;
+
+        $table = new html_table();
+        $table->head  = array(
+            'Course',
+            'Status'
+        );
+        $table->attributes['class'] = 'admintable generaltable';
+        $table->data = array();
+
+        $data = $this->get_category_data($categoryid, $startdate, $enddate);
+        foreach ($data as $row) {
+            $course = \html_writer::tag('a', $row->shortname, array(
+                'href' => new \moodle_url('/course/view.php', array(
+                    'id' => $row->id
+                )),
+                'target' => '_blank'
+            ));
+
+            $table->data[] = new html_table_row(array(
+                new html_table_cell($course),
+                new html_table_cell($row->status)
+            ));
+        }
+
+        return html_writer::table($table);
+    }
 
     /**
      * Returns data for the table.
      */
-    private function get_category_data($startdate, $enddate, $categoryid) {
+    private function get_category_data($categoryid, $startdate, $enddate) {
         global $DB;
 
         $sql = <<<SQL
-        SELECT c.shortname,
+        SELECT
+            c.id,
+            c.shortname,
             CASE WHEN (stud.cnt<2 OR stud.cnt IS NULL)
             THEN 'ceased'
             ELSE
