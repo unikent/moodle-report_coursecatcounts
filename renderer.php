@@ -56,7 +56,7 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
         $table->attributes['class'] = 'admintable generaltable';
         $table->data = array();
 
-        $data = $this->get_data($startdate, $enddate);
+        $data = $this->get_global_data($startdate, $enddate);
         foreach ($data as $row) {
             $category = str_pad($row->name, substr_count($row->path, 1), '-');
 
@@ -81,7 +81,7 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
     /**
      * Returns data for the table.
      */
-    public function get_data($startdate, $enddate) {
+    private function get_global_data($startdate, $enddate) {
         global $DB;
 
         $sql = <<<SQL
@@ -239,6 +239,75 @@ SQL;
         return $DB->get_records_sql($sql, array(
             'startdate' => $startdate,
             'enddate' => $enddate
+        ));
+    }
+
+    /**
+     * Returns data for the table.
+     */
+    private function get_category_data($startdate, $enddate, $categoryid) {
+        global $DB;
+
+        $sql = <<<SQL
+        SELECT c.shortname,
+            CASE WHEN (stud.cnt<2 OR stud.cnt IS NULL)
+            THEN 'ceased'
+            ELSE
+                CASE WHEN (stud.cnt>1 AND stud.cnt IS NOT NULL) AND mods.cnt>0 AND mods.cnt2>0 AND c.visible=1
+                THEN 'active'
+                ELSE
+                    CASE WHEN (stud.cnt>1 AND stud.cnt IS NOT NULL) AND mods.cnt>0 AND mods.cnt2>0 AND c.visible=0
+                    THEN 'resting'
+                    ELSE
+                        CASE WHEN (stud.cnt>1 AND stud.cnt IS NOT NULL) AND (mods.cnt<1 OR mods.cnt IS NULL) AND (mods.cnt2<1 OR mods.cnt2 IS NULL)
+                        THEN 'inactive'
+                        ELSE
+                            'unknown'
+                        END
+                    END
+                END
+        END as status
+
+        FROM {course} c
+
+        INNER JOIN {course_categories} cc
+            ON c.category = cc.id
+
+        LEFT OUTER JOIN (
+            SELECT c.id as courseid, COUNT(ra.id) cnt
+                FROM {course} c
+                INNER JOIN {context} ctx
+                        ON ctx.instanceid=c.id
+                        AND ctx.contextlevel=50
+                INNER JOIN {role_assignments} ra
+                        ON ra.contextid=ctx.id
+                INNER JOIN {role} r
+                        ON ra.roleid = r.id
+            WHERE r.shortname IN ('student', 'sds_student')
+            GROUP BY c.id
+        ) stud
+            ON stud.courseid = c.id
+
+        LEFT OUTER JOIN (
+            SELECT cm.course courseid, COUNT(*) cnt , COUNT(DISTINCT cm.module) cnt2
+            FROM {course_modules} cm
+            LEFT OUTER JOIN {course} c
+                ON (c.timecreated BETWEEN cm.added - 120 AND cm.added + 120 )
+                AND c.id=cm.course
+            WHERE c.id IS NULL
+            GROUP BY cm.course
+        ) mods
+            ON mods.courseid = c.id
+
+        WHERE c.startdate BETWEEN :startdate AND :enddate
+        AND (cc.path LIKE :categorya OR cc.path LIKE :categoryb)
+SQL;
+
+        return $DB->get_records_sql($sql, array(
+            'startdate' => $startdate,
+            'enddate' => $enddate,
+            'categorya' => "%/" . $categoryid,
+            'categoryb' => "%/" . $categoryid . "/%"
         ));
     }
 }
