@@ -91,6 +91,12 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
     private function get_global_data($startdate, $enddate) {
         global $DB;
 
+        $cachekey = $startdate . '-' . $enddate;
+        $cache = \cache::make('report_coursecatcounts', 'report_coursecatcounts');
+        if ($content = $cache->get($cachekey)) {
+            return $content;
+        }
+
         $sql = <<<SQL
         SELECT
             cco.id as categoryid,
@@ -250,10 +256,14 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
         GROUP BY cco.path
 SQL;
 
-        return $DB->get_records_sql($sql, array(
+        $data = $DB->get_records_sql($sql, array(
             'startdate' => $startdate,
             'enddate' => $enddate
         ));
+
+        $cache->set($cachekey, $data);
+
+        return $data;
     }
     /**
      * This function will render a table.
@@ -294,6 +304,12 @@ SQL;
      */
     private function get_category_data($categoryid, $startdate, $enddate) {
         global $DB;
+
+        $cachekey = $categoryid . '-' . $startdate . '-' . $enddate;
+        $cache = \cache::make('report_coursecatcounts', 'report_coursecatcounts');
+        if ($content = $cache->get($cachekey)) {
+            return $content;
+        }
 
         $sql = <<<SQL
         SELECT
@@ -352,11 +368,15 @@ SQL;
         AND (cc.path LIKE :categorya OR cc.path LIKE :categoryb)
 SQL;
 
-        return $DB->get_records_sql($sql, array(
+        $data = $DB->get_records_sql($sql, array(
             'startdate' => $startdate,
             'enddate' => $enddate,
             'categorya' => "%/" . $categoryid,
             'categoryb' => "%/" . $categoryid . "/%"
         ));
+
+        $cache->set($cachekey, $data);
+
+        return $data;
     }
 }
