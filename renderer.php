@@ -94,7 +94,7 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
      */
     public function export_global_report($startdate, $enddate) {
         $export = new \csv_export_writer();
-        $export->set_filename('Course-Report');
+        $export->set_filename('Category-Report-' . $startdate . '-' . $enddate);
         $export->add_data(array(
             'Category',
             'Total From Course',
@@ -353,7 +353,7 @@ SQL;
      */
     public function export_category_report($categoryid, $startdate, $enddate) {
         $export = new \csv_export_writer();
-        $export->set_filename('Course-Report');
+        $export->set_filename('Course-Report-' . $categoryid . '-' . $startdate . '-' . $enddate);
         $export->add_data(array(
             'Course',
             'Status'
