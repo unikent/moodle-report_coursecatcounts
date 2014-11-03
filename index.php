@@ -44,6 +44,8 @@ if (!$form->is_submitted()) {
     // If we dont have a start date or an end date, we cannot continue.
     if ($startdate > 0 && $enddate > 0 && $startdate < $enddate) {
         echo $renderer->run_report($startdate, $enddate);
+
+        $form->set_from_time($startdate, $enddate);
     }
 }
 
