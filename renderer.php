@@ -185,14 +185,17 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
             ON CONCAT(cc.path,'/') LIKE CONCAT(cco.path, '/%')
 
         LEFT OUTER JOIN (
-            SELECT e.courseid, COUNT(*) cnt
-                FROM {user_enrolments} ue
-            JOIN {enrol} e
-                ON ue.enrolid = e.id
-            JOIN {role} r
-                ON e.roleid = r.id
-            WHERE r.shortname in ('student', 'sds_student')
-            GROUP BY courseid
+            SELECT c.id as courseid, COUNT(ra.id) cnt
+            FROM {course} c
+            INNER JOIN {context} ctx
+                    ON ctx.instanceid=c.id
+                    AND ctx.contextlevel=50
+            INNER JOIN {role_assignments} ra
+                    ON ra.contextid=ctx.id
+            INNER JOIN {role} r
+                    ON ra.roleid = r.id
+            WHERE r.shortname IN ('student', 'sds_student')
+            GROUP BY c.id
         ) stud
             ON stud.courseid = c.id
 
