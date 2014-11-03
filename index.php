@@ -21,10 +21,12 @@ admin_externalpage_setup('coursecatcountsreport', '', null, '', array(
     'pagelayout' => 'report'
 ));
 
+$category = optional_param('category', false, PARAM_INT);
+
 $form = new \report_coursecatcounts\forms\date_select();
 
 // Grab form values if we have any.
-if ($data = $form->get_data()) {
+if (!$category && $data = $form->get_data()) {
     redirect(new \moodle_url('/report/coursecatcounts/index.php', array(
         'startdate' => $data->startdate,
         'enddate' => $data->enddate
@@ -40,7 +42,16 @@ echo $OUTPUT->heading("Category-Based Course Report");
 if (!$form->is_submitted()) {
     $startdate = optional_param('startdate', 0, PARAM_INT);
     $enddate = optional_param('enddate', 0, PARAM_INT);
-    $category = optional_param('category', false, PARAM_INT);
+
+    // Show a back link for category view.
+    if ($category) {
+        echo \html_writer::tag('a', 'Back', array(
+            'href' => new \moodle_url('/report/coursecatcounts/index.php', array(
+                'startdate' => $startdate,
+                'enddate' => $enddate
+            ))
+        ));
+    }
 
     // If we dont have a start date or an end date, we cannot continue.
     if ($startdate > 0 && $enddate > 0 && $startdate < $enddate) {
@@ -54,6 +65,8 @@ if (!$form->is_submitted()) {
     }
 }
 
-$form->display();
+if (!$category) {
+    $form->display();
+}
 
 echo $OUTPUT->footer();
