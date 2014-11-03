@@ -14,8 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die;
-
-$plugin->version   = 2014110300;
-$plugin->requires  = 2013110500;
-$plugin->component = 'report_coursecatcounts';
+/**
+ * Deadlines report cache
+ */
+$definitions = array(
+    'report_coursecatcounts' => array(
+        'mode' => cache_store::MODE_APPLICATION,
+        'ttl'  => 14400
+    )
+);

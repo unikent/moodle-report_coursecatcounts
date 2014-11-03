@@ -15,3 +15,4 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 $string['pluginname'] = 'Category-Based Course Counts';
+$string['cachedef_report_coursecatcounts'] = 'Cat-Based Course Count Report Data';
