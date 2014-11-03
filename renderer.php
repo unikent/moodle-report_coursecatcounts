@@ -59,6 +59,11 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
         $data = $this->get_global_data($startdate, $enddate);
         foreach ($data as $row) {
             $category = str_pad($row->name, substr_count($row->path, 1), '-');
+            $category = \html_writer::tag('a', $category, array(
+                'href' => new \moodle_url('/report/coursecatcounts/index.php', array(
+                    'category' => $row->categoryid
+                ))
+            ));
 
             $table->data[] = new html_table_row(array(
                 new html_table_cell($category),
@@ -86,6 +91,7 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
 
         $sql = <<<SQL
         SELECT
+            cco.id as categoryid,
             cco.path,
             cco.name,
             COUNT(c.id) total_from_course,

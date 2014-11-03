@@ -21,44 +21,36 @@ admin_externalpage_setup('coursecatcountsreport', '', null, '', array(
     'pagelayout' => 'report'
 ));
 
+$form = new \report_coursecatcounts\forms\date_select();
+
+// Grab form values if we have any.
+if ($data = $form->get_data()) {
+    redirect(new \moodle_url('/report/coursecatcounts/index.php', array(
+        'startdate' => $data->startdate,
+        'enddate' => $data->enddate
+    )));
+}
+
 $renderer = $PAGE->get_renderer('report_coursecatcounts');
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading("Category-Based Course Report");
 
-$form = new \report_coursecatcounts\forms\date_select();
-$data = $form->get_data();
+$form->display();
 
-// Sanity check.
-if ($data) {
-    $startdate = (object)$data->startdate;
-    $startdate = strtotime("{$startdate->day}/{$startdate->month}/{$startdate->year}");
-
-    $enddate = (object)$data->enddate;
-    $enddate = strtotime("{$enddate->day}/{$enddate->month}/{$enddate->year}");
-
-    if (!$startdate) {
-        echo $OUTPUT->notification("Invalid start date!");
-        $data = false;
-    }
-
-    if (!$enddate) {
-        echo $OUTPUT->notification("Invalid end date!");
-        $data = false;
-    }
-
-    if ($startdate > $enddate || $startdate == $enddate) {
-        echo $OUTPUT->notification("End date must be greater than start date!");
-        $data = false;
-    }
-
-    if ($data) {
-        echo $renderer->run_report($startdate, $enddate);
-    }
+// Check the form was not submitted.
+if ($form->is_submitted() && !$form->is_validated()) {
+    die($OUTPUT->footer());
 }
 
-if (!$data) {
-    $form->display();
+$startdate = optional_param('startdate', 0, PARAM_INT);
+$enddate = optional_param('enddate', 0, PARAM_INT);
+
+// If we dont have a start date or an end date, we cannot continue.
+if ($startdate === 0 || $enddate === 0 || $startdate > $enddate) {
+    die($OUTPUT->footer());
 }
+
+echo $renderer->run_report($startdate, $enddate);
 
 echo $OUTPUT->footer();

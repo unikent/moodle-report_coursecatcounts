@@ -86,7 +86,7 @@ class date_select extends \moodleform
      * Form validation.
      */
     public function validation($data, $files) {
-        $data = $this->convert_dates($data);
+        $data = $this->convert_dates((object)$data);
 
         $errors = array();
 
