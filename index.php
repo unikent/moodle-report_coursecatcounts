@@ -36,21 +36,17 @@ $renderer = $PAGE->get_renderer('report_coursecatcounts');
 echo $OUTPUT->header();
 echo $OUTPUT->heading("Category-Based Course Report");
 
+// Check the form was not submitted this time around.
+if (!$form->is_submitted()) {
+    $startdate = optional_param('startdate', 0, PARAM_INT);
+    $enddate = optional_param('enddate', 0, PARAM_INT);
+
+    // If we dont have a start date or an end date, we cannot continue.
+    if ($startdate > 0 && $enddate > 0 && $startdate < $enddate) {
+        echo $renderer->run_report($startdate, $enddate);
+    }
+}
+
 $form->display();
-
-// Check the form was not submitted.
-if ($form->is_submitted() && !$form->is_validated()) {
-    die($OUTPUT->footer());
-}
-
-$startdate = optional_param('startdate', 0, PARAM_INT);
-$enddate = optional_param('enddate', 0, PARAM_INT);
-
-// If we dont have a start date or an end date, we cannot continue.
-if ($startdate === 0 || $enddate === 0 || $startdate > $enddate) {
-    die($OUTPUT->footer());
-}
-
-echo $renderer->run_report($startdate, $enddate);
 
 echo $OUTPUT->footer();
