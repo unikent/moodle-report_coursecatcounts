@@ -24,6 +24,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once($CFG->libdir . "/csvlib.class.php");
+
 /**
  * Implements the plugin renderer
  *
@@ -36,7 +38,7 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
      *
      * @return string HTML to output.
      */
-    public function run_report($startdate, $enddate) {
+    public function run_global_report($startdate, $enddate, $csvlink) {
         global $DB;
 
         $table = new html_table();
@@ -56,9 +58,16 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
         $table->attributes['class'] = 'admintable generaltable';
         $table->data = array();
 
-        $data = $this->get_data($startdate, $enddate);
+        $data = $this->get_global_data($startdate, $enddate);
         foreach ($data as $row) {
             $category = str_pad($row->name, substr_count($row->path, 1), '-');
+            $category = \html_writer::tag('a', $category, array(
+                'href' => new \moodle_url('/report/coursecatcounts/index.php', array(
+                    'category' => $row->categoryid,
+                    'startdate' => $startdate,
+                    'enddate' => $enddate
+                ))
+            ));
 
             $table->data[] = new html_table_row(array(
                 new html_table_cell($category),
@@ -75,17 +84,72 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
             ));
         }
 
+        $csvcell = new html_table_cell($csvlink);
+        $csvcell->colspan = 11;
+        $table->data[] = new html_table_row(array($csvcell));
+
         return html_writer::table($table);
     }
 
     /**
+     * This function will output a CSV.
+     *
+     * @return string HTML to output.
+     */
+    public function export_global_report($startdate, $enddate) {
+        $export = new \csv_export_writer();
+        $export->set_filename('Category-Report-' . $startdate . '-' . $enddate);
+        $export->add_data(array(
+            'Category',
+            'Total From Course',
+            'Ceased',
+            'Total',
+            'Active',
+            'Resting',
+            'Inactive',
+            'Per C Active',
+            'Guest',
+            'Keyed',
+            'Per C Guest'
+        ));
+
+        $data = $this->get_global_data($startdate, $enddate);
+        foreach ($data as $row) {
+            $category = str_pad($row->name, substr_count($row->path, 1), '-');
+            $export->add_data(array(
+                s($category),
+                s($row->total_from_course),
+                s($row->ceased),
+                s($row->total),
+                s($row->active),
+                s($row->resting),
+                s($row->inactive),
+                s($row->per_c_active),
+                s($row->guest),
+                s($row->keyed),
+                s($row->per_c_guest)
+            ));
+        }
+
+        $export->download_file();
+    }
+
+
+    /**
      * Returns data for the table.
      */
-    public function get_data($startdate, $enddate) {
+    private function get_global_data($startdate, $enddate) {
         global $DB;
+
+        $cachekey = $startdate . '-' . $enddate;
+        $cache = \cache::make('report_coursecatcounts', 'report_coursecatcounts');
+        if ($content = $cache->get($cachekey)) {
+            return $content;
+        }
 
         $sql = <<<SQL
         SELECT
+            cco.id as categoryid,
             cco.path,
             cco.name,
             COUNT(c.id) total_from_course,
@@ -131,21 +195,24 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
                 END
             ) inactive,
 
-            SUM(
-                CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
-                AND mods.cnt > 0
-                AND mods.cnt2 > 0
-                AND c.visible = 1
-                    THEN 1
-                    ELSE 0
-                END
-            ) * 100 / (
-                COUNT(c.id) - SUM(
-                    CASE WHEN (stud.cnt < 2 OR stud.cnt IS NULL)
+            COALESCE(
+                SUM(
+                    CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
+                    AND mods.cnt > 0
+                    AND mods.cnt2 > 0
+                    AND c.visible = 1
                         THEN 1
                         ELSE 0
                     END
-                )
+                ) * 100 / (
+                    COUNT(c.id) - SUM(
+                        CASE WHEN (stud.cnt < 2 OR stud.cnt IS NULL)
+                            THEN 1
+                            ELSE 0
+                        END
+                    )
+                ),
+                'N/A'
             ) per_c_active,
 
             SUM(
@@ -162,19 +229,22 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
                 END
             ) keyed,
 
-            SUM(
-                CASE WHEN en.statcnt > 0
-                    THEN 1
-                    ELSE 0
-                END
-            ) * 100 / SUM(
-                CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
-                AND mods.cnt > 0
-                AND mods.cnt2 > 0
-                AND c.visible = 1
-                    THEN 1
-                    ELSE 0
-                END
+            COALESCE(
+                SUM(
+                    CASE WHEN en.statcnt > 0
+                        THEN 1
+                        ELSE 0
+                    END
+                ) * 100 / SUM(
+                    CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
+                    AND mods.cnt > 0
+                    AND mods.cnt2 > 0
+                    AND c.visible = 1
+                        THEN 1
+                        ELSE 0
+                    END
+                ),
+                'N/A'
             ) per_c_guest
         FROM {course} c
 
@@ -185,14 +255,17 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
             ON CONCAT(cc.path,'/') LIKE CONCAT(cco.path, '/%')
 
         LEFT OUTER JOIN (
-            SELECT e.courseid, COUNT(*) cnt
-                FROM {user_enrolments} ue
-            JOIN {enrol} e
-                ON ue.enrolid = e.id
-            JOIN {role} r
-                ON e.roleid = r.id
-            WHERE r.shortname in ('student', 'sds_student')
-            GROUP BY courseid
+            SELECT c.id as courseid, COUNT(ra.id) cnt
+            FROM {course} c
+            INNER JOIN {context} ctx
+                    ON ctx.instanceid=c.id
+                    AND ctx.contextlevel=50
+            INNER JOIN {role_assignments} ra
+                    ON ra.contextid=ctx.id
+            INNER JOIN {role} r
+                    ON ra.roleid = r.id
+            WHERE r.shortname IN ('student', 'sds_student')
+            GROUP BY c.id
         ) stud
             ON stud.courseid = c.id
 
@@ -233,9 +306,157 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
         GROUP BY cco.path
 SQL;
 
-        return $DB->get_records_sql($sql, array(
+        $data = $DB->get_records_sql($sql, array(
             'startdate' => $startdate,
             'enddate' => $enddate
         ));
+
+        $cache->set($cachekey, $data);
+
+        return $data;
+    }
+
+    /**
+     * This function will render a table.
+     *
+     * @return string HTML to output.
+     */
+    public function run_category_report($categoryid, $startdate, $enddate, $csvlink) {
+        global $DB;
+
+        $table = new html_table();
+        $table->head  = array(
+            'Course',
+            'Status'
+        );
+        $table->attributes['class'] = 'admintable generaltable';
+        $table->data = array();
+
+        $data = $this->get_category_data($categoryid, $startdate, $enddate);
+        foreach ($data as $row) {
+            $course = \html_writer::tag('a', $row->shortname, array(
+                'href' => new \moodle_url('/course/view.php', array(
+                    'id' => $row->id
+                )),
+                'target' => '_blank'
+            ));
+
+            $table->data[] = new html_table_row(array(
+                new html_table_cell($course),
+                new html_table_cell($row->status)
+            ));
+        }
+
+        $csvcell = new html_table_cell($csvlink);
+        $csvcell->colspan = 2;
+        $table->data[] = new html_table_row(array($csvcell));
+
+        return html_writer::table($table);
+    }
+
+    /**
+     * This function will output a CSV.
+     *
+     * @return string HTML to output.
+     */
+    public function export_category_report($categoryid, $startdate, $enddate) {
+        $export = new \csv_export_writer();
+        $export->set_filename('Course-Report-' . $categoryid . '-' . $startdate . '-' . $enddate);
+        $export->add_data(array(
+            'Course',
+            'Status'
+        ));
+
+        $data = $this->get_category_data($categoryid, $startdate, $enddate);
+        foreach ($data as $row) {
+            $export->add_data(array(
+                s($row->shortname),
+                s($row->status)
+            ));
+        }
+
+        $export->download_file();
+    }
+
+
+    /**
+     * Returns data for the table.
+     */
+    private function get_category_data($categoryid, $startdate, $enddate) {
+        global $DB;
+
+        $cachekey = $categoryid . '-' . $startdate . '-' . $enddate;
+        $cache = \cache::make('report_coursecatcounts', 'report_coursecatcounts');
+        if ($content = $cache->get($cachekey)) {
+            return $content;
+        }
+
+        $sql = <<<SQL
+        SELECT
+            c.id,
+            c.shortname,
+            CASE WHEN (stud.cnt<2 OR stud.cnt IS NULL)
+            THEN 'ceased'
+            ELSE
+                CASE WHEN (stud.cnt>1 AND stud.cnt IS NOT NULL) AND mods.cnt>0 AND mods.cnt2>0 AND c.visible=1
+                THEN 'active'
+                ELSE
+                    CASE WHEN (stud.cnt>1 AND stud.cnt IS NOT NULL) AND mods.cnt>0 AND mods.cnt2>0 AND c.visible=0
+                    THEN 'resting'
+                    ELSE
+                        CASE WHEN (stud.cnt>1 AND stud.cnt IS NOT NULL) AND (mods.cnt<1 OR mods.cnt IS NULL) AND (mods.cnt2<1 OR mods.cnt2 IS NULL)
+                        THEN 'inactive'
+                        ELSE
+                            'unknown'
+                        END
+                    END
+                END
+        END as status
+
+        FROM {course} c
+
+        INNER JOIN {course_categories} cc
+            ON c.category = cc.id
+
+        LEFT OUTER JOIN (
+            SELECT c.id as courseid, COUNT(ra.id) cnt
+                FROM {course} c
+                INNER JOIN {context} ctx
+                        ON ctx.instanceid=c.id
+                        AND ctx.contextlevel=50
+                INNER JOIN {role_assignments} ra
+                        ON ra.contextid=ctx.id
+                INNER JOIN {role} r
+                        ON ra.roleid = r.id
+            WHERE r.shortname IN ('student', 'sds_student')
+            GROUP BY c.id
+        ) stud
+            ON stud.courseid = c.id
+
+        LEFT OUTER JOIN (
+            SELECT cm.course courseid, COUNT(*) cnt , COUNT(DISTINCT cm.module) cnt2
+            FROM {course_modules} cm
+            LEFT OUTER JOIN {course} c
+                ON (c.timecreated BETWEEN cm.added - 120 AND cm.added + 120 )
+                AND c.id=cm.course
+            WHERE c.id IS NULL
+            GROUP BY cm.course
+        ) mods
+            ON mods.courseid = c.id
+
+        WHERE c.startdate BETWEEN :startdate AND :enddate
+        AND (cc.path LIKE :categorya OR cc.path LIKE :categoryb)
+SQL;
+
+        $data = $DB->get_records_sql($sql, array(
+            'startdate' => $startdate,
+            'enddate' => $enddate,
+            'categorya' => "%/" . $categoryid,
+            'categoryb' => "%/" . $categoryid . "/%"
+        ));
+
+        $cache->set($cachekey, $data);
+
+        return $data;
     }
 }
