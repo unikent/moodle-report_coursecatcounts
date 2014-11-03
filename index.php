@@ -90,14 +90,13 @@ if (!$form->is_submitted()) {
         ));
         echo '<p>'.$link.'</p>';
 
-        echo\html_writer::empty_tag('hr');
-
         // Update dates in form.
         $form->set_from_time($startdate, $enddate);
     }
 }
 
 if (!$category) {
+    echo\html_writer::empty_tag('hr');
     echo $OUTPUT->heading('New Report', 4);
     $form->display();
 }
