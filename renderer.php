@@ -139,21 +139,24 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
                 END
             ) inactive,
 
-            SUM(
-                CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
-                AND mods.cnt > 0
-                AND mods.cnt2 > 0
-                AND c.visible = 1
-                    THEN 1
-                    ELSE 0
-                END
-            ) * 100 / (
-                COUNT(c.id) - SUM(
-                    CASE WHEN (stud.cnt < 2 OR stud.cnt IS NULL)
+            COALESCE(
+                SUM(
+                    CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
+                    AND mods.cnt > 0
+                    AND mods.cnt2 > 0
+                    AND c.visible = 1
                         THEN 1
                         ELSE 0
                     END
-                )
+                ) * 100 / (
+                    COUNT(c.id) - SUM(
+                        CASE WHEN (stud.cnt < 2 OR stud.cnt IS NULL)
+                            THEN 1
+                            ELSE 0
+                        END
+                    )
+                ),
+                'N/A'
             ) per_c_active,
 
             SUM(
@@ -170,19 +173,22 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
                 END
             ) keyed,
 
-            SUM(
-                CASE WHEN en.statcnt > 0
-                    THEN 1
-                    ELSE 0
-                END
-            ) * 100 / SUM(
-                CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
-                AND mods.cnt > 0
-                AND mods.cnt2 > 0
-                AND c.visible = 1
-                    THEN 1
-                    ELSE 0
-                END
+            COALESCE(
+                SUM(
+                    CASE WHEN en.statcnt > 0
+                        THEN 1
+                        ELSE 0
+                    END
+                ) * 100 / SUM(
+                    CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
+                    AND mods.cnt > 0
+                    AND mods.cnt2 > 0
+                    AND c.visible = 1
+                        THEN 1
+                        ELSE 0
+                    END
+                ),
+                'N/A'
             ) per_c_guest
         FROM {course} c
 
