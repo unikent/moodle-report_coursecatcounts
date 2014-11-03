@@ -54,7 +54,7 @@ if (!$form->is_submitted()) {
     );
 
     // Show a back link for category view.
-    if ($category) {
+    if ($format == 'screen' && $category) {
         echo \html_writer::tag('a', 'Back', array(
             'href' => new \moodle_url('/report/coursecatcounts/index.php', $urlparams)
         ));
