@@ -24,6 +24,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once($CFG->libdir . "/csvlib.class.php");
+
 /**
  * Implements the plugin renderer
  *
@@ -84,6 +86,50 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
 
         return html_writer::table($table);
     }
+
+    /**
+     * This function will output a CSV.
+     *
+     * @return string HTML to output.
+     */
+    public function export_global_report($startdate, $enddate) {
+        $export = new \csv_export_writer();
+        $export->set_filename('Course-Report');
+        $export->add_data(array(
+            'Category',
+            'Total From Course',
+            'Ceased',
+            'Total',
+            'Active',
+            'Resting',
+            'Inactive',
+            'Per C Active',
+            'Guest',
+            'Keyed',
+            'Per C Guest'
+        ));
+
+        $data = $this->get_global_data($startdate, $enddate);
+        foreach ($data as $row) {
+            $category = str_pad($row->name, substr_count($row->path, 1), '-');
+            $export->add_data(array(
+                s($category),
+                s($row->total_from_course),
+                s($row->ceased),
+                s($row->total),
+                s($row->active),
+                s($row->resting),
+                s($row->inactive),
+                s($row->per_c_active),
+                s($row->guest),
+                s($row->keyed),
+                s($row->per_c_guest)
+            ));
+        }
+
+        $export->download_file();
+    }
+
 
     /**
      * Returns data for the table.
@@ -265,6 +311,7 @@ SQL;
 
         return $data;
     }
+
     /**
      * This function will render a table.
      *
@@ -298,6 +345,31 @@ SQL;
 
         return html_writer::table($table);
     }
+
+    /**
+     * This function will output a CSV.
+     *
+     * @return string HTML to output.
+     */
+    public function export_category_report($categoryid, $startdate, $enddate) {
+        $export = new \csv_export_writer();
+        $export->set_filename('Course-Report');
+        $export->add_data(array(
+            'Course',
+            'Status'
+        ));
+
+        $data = $this->get_category_data($categoryid, $startdate, $enddate);
+        foreach ($data as $row) {
+            $export->add_data(array(
+                s($row->shortname),
+                s($row->status)
+            ));
+        }
+
+        $export->download_file();
+    }
+
 
     /**
      * Returns data for the table.
