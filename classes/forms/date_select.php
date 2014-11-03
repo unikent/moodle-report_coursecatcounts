@@ -36,24 +36,105 @@ class date_select extends \moodleform
     public function definition() {
         $mform =& $this->_form;
 
-        $dategroup = array();
+        $fields = array(
+            'startdate' => 'Start Date',
+            'enddate' => 'End Date'
+        );
 
-        $range = range(1, 31);
-        $dategroup[] = $mform->createElement('select', 'day', '', array_combine($range, $range));
+        foreach ($fields as $name => $text) {
+            $dategroup = array();
 
-        $range = range(1, 12);
-        $months = array();
-        for ($i = 1; $i < 13; $i++) {
-            $months[$i] = date('F', mktime(0, 0, 0, $i));
+            $range = range(1, 31);
+            $dategroup[] = $mform->createElement('select', $name . '_day', '', array_combine($range, $range));
+
+            $range = range(1, 12);
+            $months = array();
+            for ($i = 1; $i < 13; $i++) {
+                $months[$i] = date('F', mktime(0, 0, 0, $i));
+            }
+            $dategroup[] = $mform->createElement('select', $name . '_month', '', array_combine($range, $months));
+
+            $range = range(2004, ((int)date("Y")) + 2);
+            $dategroup[] = $mform->createElement('select', $name . '_year', '', array_combine($range, $range));
+
+            $mform->addGroup($dategroup, $name, $text);
         }
-        $dategroup[] = $mform->createElement('select', 'month', '', array_combine($range, $months));
-
-        $range = range(2004, ((int)date("Y")) + 2);
-        $dategroup[] = $mform->createElement('select', 'year', '', array_combine($range, $range));
-
-        $mform->addGroup($dategroup, 'startdate', 'Start Date');
-        $mform->addGroup($dategroup, 'enddate', 'End Date');
 
         $this->add_action_buttons(false, "Run Report");
+    }
+
+    /**
+     * Set form data from times.
+     */
+    public function set_from_time($start, $end) {
+        $dates = array(
+            'startdate' => $start,
+            'enddate' => $end,
+        );
+
+        $data = array();
+        foreach ($dates as $field => $time) {
+            $time = strftime('%d/%m/%Y', $time);
+            $parts = explode('/', $time);
+            if (count($parts) > 0) {
+                $data["{$field}[{$field}_day]"] = $parts[0];
+                $data["{$field}[{$field}_month]"] = $parts[1];
+                $data["{$field}[{$field}_year]"] = $parts[2];
+            }
+        }
+
+        $this->set_data($data);
+    }
+
+    /**
+     * Convert dates in data object.
+     */
+    private function convert_dates($data) {
+        $startdate = (object)$data->startdate;
+        if ($startdate) {
+            $data->startdate = strtotime("{$startdate->startdate_day}/{$startdate->startdate_month}/{$startdate->startdate_year}");
+        }
+
+        $enddate = (object)$data->enddate;
+        if ($enddate) {
+            $data->enddate = strtotime("{$enddate->enddate_day}/{$enddate->enddate_month}/{$enddate->enddate_year}");
+        }
+
+        return $data;
+    }
+
+    /**
+     * Return proper dates.
+     */
+    public function get_data() {
+        $data = parent::get_data();
+        if (!$data) {
+            return false;
+        }
+
+        return $this->convert_dates($data);
+    }
+
+    /**
+     * Form validation.
+     */
+    public function validation($data, $files) {
+        $data = $this->convert_dates((object)$data);
+
+        $errors = array();
+
+        if (!$data->startdate) {
+            $errors['startdate'] = "Invalid start date";
+        }
+
+        if (!$data->enddate) {
+            $errors['enddate'] = "Invalid end date";
+        }
+
+        if ($data->startdate > $data->enddate || $data->startdate == $data->enddate) {
+            $errors['enddate'] = "End date must be greater than start date";
+        }
+
+        return $errors;
     }
 }

@@ -21,43 +21,84 @@ admin_externalpage_setup('coursecatcountsreport', '', null, '', array(
     'pagelayout' => 'report'
 ));
 
-$renderer = $PAGE->get_renderer('report_coursecatcounts');
-
-echo $OUTPUT->header();
-echo $OUTPUT->heading("Category-Based Course Report");
+$category = optional_param('category', false, PARAM_INT);
+$format = optional_param('format', 'screen', PARAM_ALPHA);
+if ($format != 'csv') {
+    $format = 'screen';
+}
 
 $form = new \report_coursecatcounts\forms\date_select();
-$data = $form->get_data();
 
-// Sanity check.
-if ($data) {
-    $startdate = (object)$data->startdate;
-    $startdate = strtotime("{$startdate->day}/{$startdate->month}/{$startdate->year}");
+// Grab form values if we have any.
+if (!$category && $data = $form->get_data()) {
+    redirect(new \moodle_url('/report/coursecatcounts/index.php', array(
+        'startdate' => $data->startdate,
+        'enddate' => $data->enddate
+    )));
+}
 
-    $enddate = (object)$data->enddate;
-    $enddate = strtotime("{$enddate->day}/{$enddate->month}/{$enddate->year}");
+$renderer = $PAGE->get_renderer('report_coursecatcounts');
 
-    if (!$startdate) {
-        echo $OUTPUT->notification("Invalid start date!");
-        $data = false;
-    }
+if ($format == 'screen') {
+    echo $OUTPUT->header();
+    echo $OUTPUT->heading("Category-Based Course Report");
+}
 
-    if (!$enddate) {
-        echo $OUTPUT->notification("Invalid end date!");
-        $data = false;
-    }
+// Check the form was not submitted this time around.
+if (!$form->is_submitted()) {
+    $startdate = optional_param('startdate', 0, PARAM_INT);
+    $enddate = optional_param('enddate', 0, PARAM_INT);
+    $urlparams = array(
+        'startdate' => $startdate,
+        'enddate' => $enddate
+    );
 
-    if ($startdate > $enddate || $startdate == $enddate) {
-        echo $OUTPUT->notification("End date must be greater than start date!");
-        $data = false;
-    }
+    // If we dont have a start date or an end date, we cannot continue.
+    if ($startdate > 0 && $enddate > 0 && $startdate < $enddate) {
+        // Output to CSV.
+        if ($format == 'csv') {
+            if (!$category) {
+                echo $renderer->export_global_report($startdate, $enddate);
+            } else {
+                echo $renderer->export_category_report($category, $startdate, $enddate);
+            }
+            die;
+        }
 
-    if ($data) {
-        echo $renderer->run_report($startdate, $enddate);
+        // Output to screen.
+        if ($format == 'screen') {
+            // Download as CSV link.
+            $csvlink = \html_writer::tag('a', 'Download as CSV', array(
+                'href' => new \moodle_url('/report/coursecatcounts/index.php', array_merge($urlparams, array(
+                    'category' => $category,
+                    'format' => 'csv'
+                ))),
+                'style' => 'float: right'
+            ));
+
+            if (!$category) {
+                echo $renderer->run_global_report($startdate, $enddate, $csvlink);
+            } else {
+                echo $renderer->run_category_report($category, $startdate, $enddate, $csvlink);
+            }
+
+            // Show a back link for category view.
+            if ($category) {
+                echo \html_writer::tag('a', 'Back', array(
+                    'href' => new \moodle_url('/report/coursecatcounts/index.php', $urlparams)
+                ));
+            } else {
+                echo\html_writer::empty_tag('hr');
+            }
+        }
+
+        // Update dates in form.
+        $form->set_from_time($startdate, $enddate);
     }
 }
 
-if (!$data) {
+if (!$category) {
+    echo $OUTPUT->heading('New Report', 4);
     $form->display();
 }
 
