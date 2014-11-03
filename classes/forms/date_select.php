@@ -56,4 +56,31 @@ class date_select extends \moodleform
 
         $this->add_action_buttons(false, "Run Report");
     }
+
+    /**
+     * Form validation.
+     */
+    public function validation($data, $files) {
+        $startdate = (object)$data->startdate;
+        $startdate = strtotime("{$startdate->day}/{$startdate->month}/{$startdate->year}");
+
+        $enddate = (object)$data->enddate;
+        $enddate = strtotime("{$enddate->day}/{$enddate->month}/{$enddate->year}");
+
+        $errors = array();
+
+        if (!$startdate) {
+            $errors['startdate'] = "Invalid start date";
+        }
+
+        if (!$enddate) {
+            $errors['enddate'] = "Invalid end date";
+        }
+
+        if ($startdate > $enddate || $startdate == $enddate) {
+            $errors['enddate'] = "End date must be greater than start date";
+        }
+
+        return $errors;
+    }
 }
