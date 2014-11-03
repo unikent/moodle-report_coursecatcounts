@@ -58,26 +58,47 @@ class date_select extends \moodleform
     }
 
     /**
+     * Convert dates in data object.
+     */
+    private function convert_dates($data) {
+        $startdate = (object)$data->startdate;
+        $data->startdate = strtotime("{$startdate->day}/{$startdate->month}/{$startdate->year}");
+
+        $enddate = (object)$data->enddate;
+        $data->enddate = strtotime("{$enddate->day}/{$enddate->month}/{$enddate->year}");
+
+        return $data;
+    }
+
+    /**
+     * Return proper dates.
+     */
+    public function get_data() {
+        $data = parent::get_data();
+        if (!$data) {
+            return false;
+        }
+
+        return $this->convert_dates($data);
+    }
+
+    /**
      * Form validation.
      */
     public function validation($data, $files) {
-        $startdate = (object)$data->startdate;
-        $startdate = strtotime("{$startdate->day}/{$startdate->month}/{$startdate->year}");
-
-        $enddate = (object)$data->enddate;
-        $enddate = strtotime("{$enddate->day}/{$enddate->month}/{$enddate->year}");
+        $data = $this->convert_dates($data);
 
         $errors = array();
 
-        if (!$startdate) {
+        if (!$data->startdate) {
             $errors['startdate'] = "Invalid start date";
         }
 
-        if (!$enddate) {
+        if (!$data->enddate) {
             $errors['enddate'] = "Invalid end date";
         }
 
-        if ($startdate > $enddate || $startdate == $enddate) {
+        if ($data->startdate > $data->enddate || $data->startdate == $data->enddate) {
             $errors['enddate'] = "End date must be greater than start date";
         }
 
