@@ -38,7 +38,7 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
      *
      * @return string HTML to output.
      */
-    public function run_global_report($startdate, $enddate) {
+    public function run_global_report($startdate, $enddate, $csvlink) {
         global $DB;
 
         $table = new html_table();
@@ -83,6 +83,10 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
                 new html_table_cell($row->per_c_guest)
             ));
         }
+
+        $csvcell = new html_table_cell($csvlink);
+        $csvcell->colspan = 11;
+        $table->data[] = new html_table_row(array($csvcell));
 
         return html_writer::table($table);
     }
@@ -317,7 +321,7 @@ SQL;
      *
      * @return string HTML to output.
      */
-    public function run_category_report($categoryid, $startdate, $enddate) {
+    public function run_category_report($categoryid, $startdate, $enddate, $csvlink) {
         global $DB;
 
         $table = new html_table();
@@ -342,6 +346,10 @@ SQL;
                 new html_table_cell($row->status)
             ));
         }
+
+        $csvcell = new html_table_cell($csvlink);
+        $csvcell->colspan = 2;
+        $table->data[] = new html_table_row(array($csvcell));
 
         return html_writer::table($table);
     }

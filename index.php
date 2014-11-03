@@ -53,15 +53,6 @@ if (!$form->is_submitted()) {
         'enddate' => $enddate
     );
 
-    // Show a back link for category view.
-    if ($format == 'screen' && $category) {
-        echo \html_writer::tag('a', 'Back', array(
-            'href' => new \moodle_url('/report/coursecatcounts/index.php', $urlparams)
-        ));
-
-        $urlparams['category'] = $category;
-    }
-
     // If we dont have a start date or an end date, we cannot continue.
     if ($startdate > 0 && $enddate > 0 && $startdate < $enddate) {
         // Output to CSV.
@@ -75,20 +66,28 @@ if (!$form->is_submitted()) {
 
         // Output to screen.
         if ($format == 'screen') {
+            // Download as CSV link.
+            $csvlink = \html_writer::tag('a', 'Download as CSV', array(
+                'href' => new \moodle_url('/report/coursecatcounts/index.php', array_merge($urlparams, array(
+                    'category' => $category,
+                    'format' => 'csv'
+                ))),
+                'style' => 'float: right'
+            ));
+
             if (!$category) {
-                echo $renderer->run_global_report($startdate, $enddate);
+                echo $renderer->run_global_report($startdate, $enddate, $csvlink);
             } else {
-                echo $renderer->run_category_report($category, $startdate, $enddate);
+                echo $renderer->run_category_report($category, $startdate, $enddate, $csvlink);
+            }
+
+            // Show a back link for category view.
+            if ($category) {
+                echo \html_writer::tag('a', 'Back', array(
+                    'href' => new \moodle_url('/report/coursecatcounts/index.php', $urlparams)
+                ));
             }
         }
-
-        // Download as CSV link.
-        $link = \html_writer::tag('a', 'Download as CSV', array(
-            'href' => new \moodle_url('/report/coursecatcounts/index.php', array_merge($urlparams, array(
-                'format' => 'csv'
-            )))
-        ));
-        echo '<p>'.$link.'</p>';
 
         // Update dates in form.
         $form->set_from_time($startdate, $enddate);
