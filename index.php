@@ -62,6 +62,7 @@ if (!$form->is_submitted()) {
             } else {
                 echo $renderer->export_category_report($category, $startdate, $enddate);
             }
+            die;
         }
 
         // Output to screen.
@@ -86,6 +87,8 @@ if (!$form->is_submitted()) {
                 echo \html_writer::tag('a', 'Back', array(
                     'href' => new \moodle_url('/report/coursecatcounts/index.php', $urlparams)
                 ));
+            } else {
+                echo\html_writer::empty_tag('hr');
             }
         }
 
@@ -95,7 +98,6 @@ if (!$form->is_submitted()) {
 }
 
 if (!$category) {
-    echo\html_writer::empty_tag('hr');
     echo $OUTPUT->heading('New Report', 4);
     $form->display();
 }
