@@ -30,16 +30,30 @@ $enddate = required_param('enddate', PARAM_INT);
 
 $table = new \html_table();
 $table->head = array(
-    "Module Code"
+    "Module Code",
+    "Student Count",
+    "Activity Count",
+    "Unique Activity Count"
 );
 
 $report = new \report_coursecatcounts\activity_report($activity, $startdate, $enddate);
-$data = $report->get_modules($catid);
+$data = $report->get_modules();
+
+// TODO - check against catid.
 
 foreach ($data as $row) {
     if ($row->$ctype > 0) {
+        $course = \html_writer::tag('a', $row->shortname, array(
+            'href' => new \moodle_url('/course/view.php', array(
+                'id' => $row->id
+            )),
+            'target' => '_blank'
+        ));
         $table->data[] = new html_table_row(array(
-            $row->shortname
+            $course,
+            $row->student_count,
+            $row->activity_count,
+            $row->unique_activity_count
         ));
     }
 }

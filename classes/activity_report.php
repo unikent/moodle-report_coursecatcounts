@@ -92,7 +92,8 @@ class activity_report
             foreach ($moduledata as $module) {
                 if (in_array($module->catid, $path)) {
                     foreach ($module as $col => $val) {
-                        if (isset($data[$category->id][$col])) {
+                        $val = (int)$val;
+                        if (isset($data[$category->id][$col]) && $val > 0) {
                             $data[$category->id][$col] += $val;
                         }
                     }
@@ -123,6 +124,9 @@ class activity_report
                 c.id,
                 c.shortname,
                 cc.id as catid,
+                stud.cnt as student_count,
+                mods.cnt as activity_count,
+                mods.cnt2 as unique_activity_count,
 
                 /* Total Modules with activity */
                 CASE WHEN (namedmods.moduleid = :activity1)
