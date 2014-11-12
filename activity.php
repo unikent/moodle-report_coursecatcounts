@@ -50,7 +50,7 @@ if ($activity > 0) {
     if ($format == 'csv') {
         $export = new \csv_export_writer();
         $export->set_filename('Activity-Report-' . $activityname . '-' . $startdate . '-' . $enddate);
-        $export->add_data(array("Report for $activityname."));
+        $export->add_data(array("Report for '{$activityname}' activity."));
         $export->add_data($report->get_headings());
         foreach ($data as $row) {
             $export->add_data(array(
@@ -67,6 +67,8 @@ if ($activity > 0) {
                 $row->inactive_activity_count
             ));
         }
+        $export->download_file();
+        die;
     } else {
         $table = new \html_table();
         $table->head = $report->get_headings();
@@ -94,6 +96,20 @@ if ($activity > 0) {
                 new html_table_cell($row->inactive_activity_count)
             ));
         }
+
+        // Download as CSV link.
+        $csvlink = \html_writer::tag('a', 'Download as CSV', array(
+            'href' => new \moodle_url('/report/coursecatcounts/activity.php', array(
+                'activity' => $activity,
+                'start' => $startdate,
+                'end' => $enddate,
+                'format' => 'csv'
+            )),
+            'style' => 'float: right'
+        ));
+        $csvcell = new html_table_cell($csvlink);
+        $csvcell->colspan = 11;
+        $table->data[] = new html_table_row(array($csvcell));
     }
 }
 
@@ -104,6 +120,8 @@ if ($startdate > 0 || $enddate > 0) {
     echo \html_writer::table($table);
     echo \html_writer::empty_tag('hr');
     echo $OUTPUT->heading('New Report', 4);
+
+    $form->set_from_time($startdate, $enddate);
 }
 
 $form->display();
