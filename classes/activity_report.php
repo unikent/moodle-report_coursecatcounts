@@ -61,6 +61,14 @@ class activity_report
     public function get_data() {
         global $DB;
 
+        $cachekey = $this->_activity . '-' . $this->_startdate . '-' . $this->_enddate;
+        $cache = \cache::make('report_coursecatcounts', 'activitycounts');
+        if ($content = $cache->get($cachekey)) {
+            return $content;
+        }
+
+        $joins = $this->get_joins();
+
         $sql = <<<SQL
             SELECT
                 cco.id as categoryid,
@@ -80,7 +88,7 @@ class activity_report
 
                 /* Ceased Modules */
                 SUM(
-                    CASE WHEN (stud.cnt < 2 OR stud.cnt IS NULL)
+                    CASE WHEN (stud.cnt < 2)
                         THEN 1
                         ELSE 0
                     END
@@ -88,7 +96,7 @@ class activity_report
 
                 /* Ceased Modules with activity */
                 SUM(
-                    CASE WHEN (stud.cnt < 2 OR stud.cnt IS NULL)
+                    CASE WHEN (stud.cnt < 2)
                     AND (namedmods.moduleid = :activity2)
                         THEN 1
                         ELSE 0
@@ -97,7 +105,7 @@ class activity_report
 
                 /* Active Modules */
                 SUM(
-                    CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
+                    CASE WHEN (stud.cnt > 1)
                     AND mods.cnt > 0
                     AND mods.cnt2 > 0
                     AND c.visible = 1
@@ -108,7 +116,7 @@ class activity_report
 
                 /* Active Modules with activity */
                 SUM(
-                    CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
+                    CASE WHEN (stud.cnt > 1)
                     AND mods.cnt > 0
                     AND mods.cnt2 > 0
                     AND c.visible = 1
@@ -120,7 +128,7 @@ class activity_report
 
                 /* Resting Modules */
                 SUM(
-                    CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
+                    CASE WHEN (stud.cnt > 1)
                     AND mods.cnt > 0
                     AND mods.cnt2 > 0
                     AND c.visible = 0
@@ -131,7 +139,7 @@ class activity_report
 
                 /* Resting Modules with activity */
                 SUM(
-                    CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
+                    CASE WHEN (stud.cnt > 1)
                     AND mods.cnt > 0
                     AND mods.cnt2 > 0
                     AND c.visible = 0
@@ -143,9 +151,9 @@ class activity_report
 
                 /* Inactive Modules */
                 SUM(
-                    CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
-                    AND (mods.cnt < 1 OR mods.cnt IS NULL)
-                    AND (mods.cnt2 < 1 OR mods.cnt2 IS NULL)
+                    CASE WHEN (stud.cnt > 1)
+                    AND (mods.cnt < 1)
+                    AND (mods.cnt2 < 1)
                         THEN 1
                         ELSE 0
                     END
@@ -153,9 +161,9 @@ class activity_report
 
                 /* Inactive Modules with activity */
                 SUM(
-                    CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
-                    AND (mods.cnt < 1 OR mods.cnt IS NULL)
-                    AND (mods.cnt2 < 1 OR mods.cnt2 IS NULL)
+                    CASE WHEN (stud.cnt > 1)
+                    AND (mods.cnt < 1)
+                    AND (mods.cnt2 < 1)
                     AND namedmods.moduleid = :activity5
                         THEN 1
                         ELSE 0
@@ -170,29 +178,52 @@ class activity_report
             RIGHT OUTER JOIN {course_categories} cco
                 ON CONCAT(cc.path,'/') LIKE CONCAT(cco.path, '/%')
 
+            $joins
+
+            WHERE c.startdate BETWEEN :startdate and :enddate
+            GROUP BY cco.path
+SQL;
+
+        $data = $DB->get_records_sql($sql, array(
+            'activity1' => $this->_activity,
+            'activity2' => $this->_activity,
+            'activity3' => $this->_activity,
+            'activity4' => $this->_activity,
+            'activity5' => $this->_activity,
+            'startdate' => $this->_startdate,
+            'enddate' => $this->_enddate
+        ));
+
+        $cache->set($cachekey, $data);
+        return $data;
+    }
+
+    /**
+     * Returns SQL joins.
+     */
+    private function get_joins() {
+        return <<<SQL
             LEFT OUTER JOIN (
-                SELECT c.id as courseid, COUNT(ra.id) cnt
+                SELECT c.id as courseid, COALESCE(COUNT(ra.id), 0) cnt
                 FROM {course} c
                 INNER JOIN {context} ctx
                         ON ctx.instanceid=c.id
                         AND ctx.contextlevel=50
-                INNER JOIN {role_assignments} ra
+                LEFT OUTER JOIN {role_assignments} ra
                         ON ra.contextid=ctx.id
-                INNER JOIN {role} r
-                        ON ra.roleid = r.id
-                WHERE r.shortname IN ('student', 'sds_student')
+                LEFT OUTER JOIN {role} r
+                        ON ra.roleid = r.id AND r.shortname IN ('student', 'sds_student')
                 GROUP BY c.id
             ) stud
                 ON stud.courseid = c.id
 
             LEFT OUTER JOIN (
-                SELECT cm.course courseid, COUNT(*) cnt, COUNT(DISTINCT cm.module) cnt2
-                    FROM {course_modules} cm
-                LEFT OUTER JOIN {course} c
+                SELECT c.id as courseid, COALESCE(COUNT(cm.id), 0) cnt, COALESCE(COUNT(DISTINCT cm.module), 0) cnt2
+                FROM {course} c
+                LEFT OUTER JOIN {course_modules} cm
                     ON (c.timecreated BETWEEN cm.added - 120 and cm.added + 120)
                     AND c.id = cm.course
-                WHERE c.id IS NULL
-                GROUP BY cm.course
+                GROUP BY c.id
             ) mods
                 ON mods.courseid = c.id
 
@@ -202,12 +233,117 @@ class activity_report
                 GROUP BY cm.course, cm.module
             ) namedmods
                 ON namedmods.courseid = c.id
+SQL;
+    }
 
-            WHERE c.startdate BETWEEN :startdate and :enddate
-            GROUP BY cco.path
+    /**
+     * Returns specific modules.
+     */
+    public function get_modules($category) {
+        global $DB;
+
+        $cachekey = $this->_activity . '-' . $category . '-' . $this->_startdate . '-' . $this->_enddate;
+        $cache = \cache::make('report_coursecatcounts', 'activitycounts');
+        if ($content = $cache->get($cachekey)) {
+            return $content;
+        }
+
+        $joins = $this->get_joins();
+
+        $sql = <<<SQL
+            SELECT
+                c.id,
+                c.shortname,
+                GROUP_CONCAT(namedmods.moduleid),
+                stud.cnt as scnt,
+                mods.cnt,
+                mods.cnt2,
+
+                /* Total Modules with activity */
+                CASE WHEN (namedmods.moduleid = :activity1)
+                    THEN 1
+                    ELSE 0
+                END total_activity_count,
+
+                /* Ceased Modules */
+                CASE WHEN (stud.cnt < 2)
+                    THEN 1
+                    ELSE 0
+                END ceased,
+
+                /* Ceased Modules with activity */
+                CASE WHEN (stud.cnt < 2)
+                AND (namedmods.moduleid = :activity2)
+                    THEN 1
+                    ELSE 0
+                END ceased_activity_count,
+
+                /* Active Modules */
+                CASE WHEN (stud.cnt > 1)
+                AND mods.cnt > 0
+                AND mods.cnt2 > 0
+                AND c.visible = 1
+                    THEN 1
+                    ELSE 0
+                END active,
+
+                /* Active Modules with activity */
+                CASE WHEN (stud.cnt > 1)
+                AND mods.cnt > 0
+                AND mods.cnt2 > 0
+                AND c.visible = 1
+                AND namedmods.moduleid = :activity3
+                    THEN 1
+                    ELSE 0
+                END active_activity_count,
+
+                /* Resting Modules */
+                CASE WHEN (stud.cnt > 1)
+                AND mods.cnt > 0
+                AND mods.cnt2 > 0
+                AND c.visible = 0
+                    THEN 1
+                    ELSE 0
+                END resting,
+
+                /* Resting Modules with activity */
+                CASE WHEN (stud.cnt > 1)
+                AND mods.cnt > 0
+                AND mods.cnt2 > 0
+                AND c.visible = 0
+                AND namedmods.moduleid = :activity4
+                    THEN 1
+                    ELSE 0
+                END resting_activity_count,
+
+                /* Inactive Modules */
+                CASE WHEN (stud.cnt > 1)
+                AND (mods.cnt < 1)
+                AND (mods.cnt2 < 1)
+                    THEN 1
+                    ELSE 0
+                END inactive,
+
+                /* Inactive Modules with activity */
+                CASE WHEN (stud.cnt > 1)
+                AND (mods.cnt < 1)
+                AND (mods.cnt2 < 1)
+                AND namedmods.moduleid = :activity5
+                    THEN 1
+                    ELSE 0
+                END inactive_activity_count
+            FROM {course} c
+            INNER JOIN {course_categories} cc
+                ON cc.id = c.category
+            $joins
+            WHERE (cc.path LIKE :cata OR cc.path LIKE :catb)
+                AND c.startdate BETWEEN :startdate and :enddate
+            GROUP BY c.id
 SQL;
 
-        return $DB->get_records_sql($sql, array(
+        $data = $DB->get_records_sql($sql, array(
+            'cata' => "%/{$category}",
+            'catb' => "%/{$category}/%",
             'activity1' => $this->_activity,
             'activity2' => $this->_activity,
             'activity3' => $this->_activity,
@@ -216,6 +352,9 @@ SQL;
             'startdate' => $this->_startdate,
             'enddate' => $this->_enddate
         ));
+
+        $cache->set($cachekey, $data);
+        return $data;
     }
 
     /**

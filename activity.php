@@ -70,6 +70,19 @@ if ($activity > 0) {
         $export->download_file();
         die;
     } else {
+        $countcolumns = array(
+            'total',
+            'total_activity_count',
+            'ceased',
+            'ceased_activity_count',
+            'active',
+            'active_activity_count',
+            'resting',
+            'resting_activity_count',
+            'inactive',
+            'inactive_activity_count'
+        );
+
         $table = new \html_table();
         $table->head = $report->get_headings();
         $table->attributes['class'] = 'admintable generaltable';
@@ -82,19 +95,21 @@ if ($activity > 0) {
                 ))
             ));
 
-            $table->data[] = new html_table_row(array(
-                new html_table_cell($category),
-                new html_table_cell($row->total),
-                new html_table_cell($row->total_activity_count),
-                new html_table_cell($row->ceased),
-                new html_table_cell($row->ceased_activity_count),
-                new html_table_cell($row->active),
-                new html_table_cell($row->active_activity_count),
-                new html_table_cell($row->resting),
-                new html_table_cell($row->resting_activity_count),
-                new html_table_cell($row->inactive),
-                new html_table_cell($row->inactive_activity_count)
-            ));
+            $columns = array(
+                new html_table_cell($category)
+            );
+
+            foreach ($countcolumns as $column) {
+                $cell = new html_table_cell($row->$column);
+                $cell->attributes['class'] = "datacell " . $column;
+                $cell->attributes['column'] = $column;
+                $cell->attributes['catid'] = $row->categoryid;
+                $columns[] = $cell;
+            }
+
+            $obj = new html_table_row($columns);
+            $obj->attributes['class'] = 'datarow';
+            $table->data[] = $obj;
         }
 
         // Download as CSV link.
@@ -112,6 +127,11 @@ if ($activity > 0) {
         $table->data[] = new html_table_row(array($csvcell));
     }
 }
+
+$PAGE->requires->js_init_call('M.report_activities.init', array($activity, $startdate, $enddate), false, array(
+    'name' => 'report_coursecatcounts',
+    'fullpath' => '/report/coursecatcounts/scripts/activities.js'
+));
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading("Category-Based Activity Report");

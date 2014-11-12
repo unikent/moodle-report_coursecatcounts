@@ -21,5 +21,9 @@ $definitions = array(
     'report_coursecatcounts' => array(
         'mode' => cache_store::MODE_APPLICATION,
         'ttl'  => 14400
+    ),
+    'activitycounts' => array(
+        'mode' => cache_store::MODE_APPLICATION,
+        'ttl'  => 14400
     )
 );
