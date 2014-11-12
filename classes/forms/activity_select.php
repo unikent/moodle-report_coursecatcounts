@@ -15,26 +15,34 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Report settings
+ * Category-Based Course Counts
  *
- * @package    report
- * @subpackage connect
- * @copyright  2009 Petr Skoda
+ * @package    report_coursecatcounts
+ * @copyright  2014 Skylar Kelty <S.Kelty@kent.ac.uk>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die;
+namespace report_coursecatcounts\forms;
 
-$ADMIN->add('reports', new admin_externalpage(
-    'coursecatcountsreport',
-    'Category-Based Course Counts',
-    new \moodle_url("/report/coursecatcounts/index.php")
-));
+defined('MOODLE_INTERNAL') || die();
 
-$ADMIN->add('reports', new admin_externalpage(
-    'coursemodulecountsreport',
-    'Category-Based Activity Counts',
-    new \moodle_url("/report/coursecatcounts/activity.php")
-));
+class activity_select extends date_select
+{
+    /**
+     * Form definition
+     */
+    public function definition() {
+        global $DB;
 
-$settings = null;
+        $activities = array();
+        $records = $DB->get_records('modules');
+        foreach ($records as $record) {
+            $activities[$record->id] = $record->name;
+        }
+
+        $mform =& $this->_form;
+        $mform->addElement('select', 'activityid', 'Activity', $activities);
+
+        parent::definition();
+    }
+}
