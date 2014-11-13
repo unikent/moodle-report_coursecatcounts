@@ -37,9 +37,7 @@ $table->head = array(
 );
 
 $report = new \report_coursecatcounts\activity_report($activity, $startdate, $enddate);
-$data = $report->get_modules();
-
-// TODO - check against catid.
+$data = $report->get_modules_for_category($catid);
 
 foreach ($data as $row) {
     if ($row->$ctype > 0) {

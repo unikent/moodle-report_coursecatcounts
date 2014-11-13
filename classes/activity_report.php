@@ -56,6 +56,35 @@ class activity_report
     }
 
     /**
+     * Get data for a specific category.
+     */
+    public function get_modules_for_category($catid) {
+        global $DB;
+
+        $cachekey = 'category-' . $catid . '-' . $this->_activity . '-' . $this->_startdate . '-' . $this->_enddate;
+        $cache = \cache::make('report_coursecatcounts', 'activitycounts');
+        if ($content = $cache->get($cachekey)) {
+            //return $content;
+        }
+
+        $category = $DB->get_record('course_categories', array(
+            'id' => $catid
+        ));
+        $path = explode('/', $category->path);
+
+        $data = array();
+        $moduledata = $this->get_modules();
+        foreach ($moduledata as $module) {
+            if (in_array($module->catid, $path)) {
+                $data[] = $module;
+            }
+        }
+
+        $cache->set($cachekey, $data);
+        return $data;
+    }
+
+    /**
      * Returns data.
      */
     public function get_data() {
