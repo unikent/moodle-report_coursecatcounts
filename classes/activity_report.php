@@ -64,7 +64,7 @@ class activity_report
         $cachekey = 'category-' . $catid . '-' . $this->_activity . '-' . $this->_startdate . '-' . $this->_enddate;
         $cache = \cache::make('report_coursecatcounts', 'activitycounts');
         if ($content = $cache->get($cachekey)) {
-            //return $content;
+            return $content;
         }
 
         $category = $DB->get_record('course_categories', array(

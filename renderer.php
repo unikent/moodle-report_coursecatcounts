@@ -142,7 +142,7 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
         global $DB;
 
         $cachekey = $startdate . '-' . $enddate;
-        $cache = \cache::make('report_coursecatcounts', 'report_coursecatcounts');
+        $cache = \cache::make('report_coursecatcounts', 'categorycounts');
         if ($content = $cache->get($cachekey)) {
             return $content;
         }
@@ -386,7 +386,7 @@ SQL;
         global $DB;
 
         $cachekey = $categoryid . '-' . $startdate . '-' . $enddate;
-        $cache = \cache::make('report_coursecatcounts', 'report_coursecatcounts');
+        $cache = \cache::make('report_coursecatcounts', 'categorycounts');
         if ($content = $cache->get($cachekey)) {
             return $content;
         }
