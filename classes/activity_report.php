@@ -120,6 +120,7 @@ class activity_report
             $path = explode('/', $category->path);
             foreach ($moduledata as $module) {
                 if (in_array($module->catid, $path)) {
+                    $data[$category->id]['total'] += 1;
                     foreach ($module as $col => $val) {
                         $val = (int)$val;
                         if (isset($data[$category->id][$col]) && $val > 0) {

@@ -40,7 +40,7 @@ $report = new \report_coursecatcounts\activity_report($activity, $startdate, $en
 $data = $report->get_modules_for_category($catid);
 
 foreach ($data as $row) {
-    if ($row->$ctype > 0) {
+    if ($ctype == 'total' || $row->$ctype > 0) {
         $course = \html_writer::tag('a', $row->shortname, array(
             'href' => new \moodle_url('/course/view.php', array(
                 'id' => $row->id
