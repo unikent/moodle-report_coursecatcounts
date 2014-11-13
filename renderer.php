@@ -153,6 +153,7 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
             cco.path,
             cco.name,
             COUNT(c.id) total_from_course,
+            yr.period,
 
             SUM(
                 CASE WHEN (stud.cnt < 2 OR stud.cnt IS NULL)
@@ -248,6 +249,11 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
             ) per_c_guest
         FROM {course} c
 
+        INNER JOIN (
+            SELECT :startdate start,:enddate ending, 'valid' period
+        ) yr
+            ON c.startdate BETWEEN yr.start AND yr.ending
+
         RIGHT OUTER JOIN {course_categories} cc
             ON c.category = cc.id
 
@@ -302,8 +308,8 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
         ) en
             ON en.courseid = c.id
 
-        WHERE c.startdate BETWEEN :startdate and :enddate
-        GROUP BY cco.path
+        WHERE yr.period IS NOT NULL
+        GROUP BY yr.period, cco.path
 SQL;
 
         $data = $DB->get_records_sql($sql, array(
