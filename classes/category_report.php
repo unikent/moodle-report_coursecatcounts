@@ -216,6 +216,7 @@ SQL;
             $catids[] = $row->categoryid;
         }
 
+        // Fill in the blanks.
         $categories = $DB->get_records('course_categories');
         foreach ($categories as $category) {
             if (!in_array($category->id, $catids)) {
