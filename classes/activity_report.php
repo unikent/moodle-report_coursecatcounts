@@ -133,6 +133,10 @@ class activity_report
             $data[$category->id] = (object)$data[$category->id];
         }
 
+        uasort($data, function ($a, $b) {
+            return $a->total < $b->total;
+        });
+
         $cache->set($cachekey, $data);
         return $data;
     }
