@@ -9,7 +9,6 @@ M.report_activities = {
     },
 
     cellClick : function(Y, cell, activity, startdate, enddate) {
-        console.log(cell);
         var catid = cell.getAttribute("catid");
         var ctype = cell.getAttribute("column");
 

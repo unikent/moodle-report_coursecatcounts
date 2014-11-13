@@ -44,9 +44,9 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
         $table = new html_table();
         $table->head  = array(
             'Category',
-            'Total From Course',
-            'Ceased',
             'Total',
+            'Ceased',
+            'Total - Ceased',
             'Active',
             'Resting',
             'Inactive',
@@ -69,14 +69,44 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
                 ))
             ));
 
+            $totalfromcourse = new html_table_cell($row->total_from_course);
+            $totalfromcourse->attributes['class'] = 'datacol';
+            $totalfromcourse->attributes['catid'] = $row->categoryid;
+            $totalfromcourse->attributes['column'] = 'total_from_course';
+
+            $ceased = new html_table_cell($row->ceased);
+            $ceased->attributes['class'] = 'datacol';
+            $ceased->attributes['catid'] = $row->categoryid;
+            $ceased->attributes['column'] = 'ceased';
+
+            $total = new html_table_cell($row->total);
+            $total->attributes['class'] = 'datacol';
+            $total->attributes['catid'] = $row->categoryid;
+            $total->attributes['column'] = 'total';
+
+            $active = new html_table_cell($row->active);
+            $active->attributes['class'] = 'datacol';
+            $active->attributes['catid'] = $row->categoryid;
+            $active->attributes['column'] = 'active';
+
+            $resting = new html_table_cell($row->resting);
+            $resting->attributes['class'] = 'datacol';
+            $resting->attributes['catid'] = $row->categoryid;
+            $resting->attributes['column'] = 'resting';
+
+            $inactive = new html_table_cell($row->inactive);
+            $inactive->attributes['class'] = 'datacol';
+            $inactive->attributes['catid'] = $row->categoryid;
+            $inactive->attributes['column'] = 'inactive';
+
             $table->data[] = new html_table_row(array(
                 new html_table_cell($category),
-                new html_table_cell($row->total_from_course),
-                new html_table_cell($row->ceased),
-                new html_table_cell($row->total),
-                new html_table_cell($row->active),
-                new html_table_cell($row->resting),
-                new html_table_cell($row->inactive),
+                $totalfromcourse,
+                $ceased,
+                $total,
+                $active,
+                $resting,
+                $inactive,
                 new html_table_cell($row->per_c_active),
                 new html_table_cell($row->guest),
                 new html_table_cell($row->keyed),
