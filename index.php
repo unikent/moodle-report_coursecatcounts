@@ -22,6 +22,8 @@ admin_externalpage_setup('coursecatcountsreport', '', null, '', array(
 ));
 
 $category = optional_param('category', false, PARAM_INT);
+$startdate = optional_param('start', 0, PARAM_INT);
+$enddate = optional_param('end', 0, PARAM_INT);
 $format = optional_param('format', 'screen', PARAM_ALPHA);
 if ($format != 'csv') {
     $format = 'screen';
@@ -32,23 +34,18 @@ $form = new \report_coursecatcounts\forms\date_select();
 // Grab form values if we have any.
 if (!$category && $data = $form->get_data()) {
     redirect(new \moodle_url('/report/coursecatcounts/index.php', array(
-        'startdate' => $data->startdate,
-        'enddate' => $data->enddate
+        'start' => $data->startdate,
+        'end' => $data->enddate
     )));
 }
 
 $renderer = $PAGE->get_renderer('report_coursecatcounts');
 
 if ($format == 'screen') {
-    if (!$form->is_submitted()) {
-        $startdate = optional_param('startdate', 0, PARAM_INT);
-        $enddate = optional_param('enddate', 0, PARAM_INT);
-
-        $PAGE->requires->js_init_call('M.report_categories.init', array($startdate, $enddate), false, array(
-            'name' => 'report_coursecatcounts',
-            'fullpath' => '/report/coursecatcounts/scripts/categories.js'
-        ));
-    }
+    $PAGE->requires->js_init_call('M.report_categories.init', array($startdate, $enddate), false, array(
+        'name' => 'report_coursecatcounts',
+        'fullpath' => '/report/coursecatcounts/scripts/categories.js'
+    ));
 
     echo $OUTPUT->header();
     echo $OUTPUT->heading("Category-Based Course Report");
@@ -57,8 +54,8 @@ if ($format == 'screen') {
 // Check the form was not submitted this time around.
 if (!$form->is_submitted()) {
     $urlparams = array(
-        'startdate' => $startdate,
-        'enddate' => $enddate
+        'start' => $startdate,
+        'end' => $enddate
     );
 
     // If we dont have a start date or an end date, we cannot continue.
