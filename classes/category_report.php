@@ -154,28 +154,26 @@ class category_report
             ON CONCAT(cc.path,'/') LIKE CONCAT(cco.path, '/%')
 
         LEFT OUTER JOIN (
-            SELECT c.id as courseid, COUNT(ra.id) cnt
+            SELECT c.id as courseid, COALESCE(COUNT(ra.id), 0) cnt
             FROM {course} c
             INNER JOIN {context} ctx
                     ON ctx.instanceid=c.id
                     AND ctx.contextlevel=50
-            INNER JOIN {role_assignments} ra
+            LEFT OUTER JOIN {role_assignments} ra
                     ON ra.contextid=ctx.id
-            INNER JOIN {role} r
-                    ON ra.roleid = r.id
-            WHERE r.shortname IN ('student', 'sds_student')
+            LEFT OUTER JOIN {role} r
+                    ON ra.roleid = r.id AND r.shortname IN ('student', 'sds_student')
             GROUP BY c.id
         ) stud
             ON stud.courseid = c.id
 
         LEFT OUTER JOIN (
-            SELECT cm.course courseid, COUNT(*) cnt, COUNT(DISTINCT cm.module) cnt2
-                FROM {course_modules} cm
-            LEFT OUTER JOIN {course} c
+            SELECT c.id as courseid, COALESCE(COUNT(cm.id), 0) cnt, COALESCE(COUNT(DISTINCT cm.module), 0) cnt2
+            FROM {course} c
+            LEFT OUTER JOIN {course_modules} cm
                 ON (c.timecreated BETWEEN cm.added - 120 and cm.added + 120)
                 AND c.id = cm.course
-            WHERE c.id IS NULL
-            GROUP BY cm.course
+            GROUP BY c.id
         ) mods
             ON mods.courseid = c.id
 
