@@ -201,12 +201,43 @@ class category_report
 
         WHERE yr.period IS NOT NULL
         GROUP BY yr.period, cco.path
+        ORDER BY total_from_course DESC
 SQL;
 
         $data = $DB->get_records_sql($sql, array(
             'startdate' => $startdate,
             'enddate' => $enddate
         ));
+
+        // Because I don't want to ruin the above query...
+        // Create a list of known paths.
+        $catids = array();
+        foreach ($data as $row) {
+            $catids[] = $row->categoryid;
+        }
+
+        $categories = $DB->get_records('course_categories');
+        foreach ($categories as $category) {
+            if (!in_array($category->id, $catids)) {
+                $newcat = new \stdClass();
+                $newcat->categoryid = $category->id;
+                $newcat->path = $category->path;
+                $newcat->name = $category->name;
+                $newcat->total_from_course = 0;
+                $newcat->period = 0;
+                $newcat->ceased = 0;
+                $newcat->total = 0;
+                $newcat->active = 0;
+                $newcat->resting = 0;
+                $newcat->inactive = 0;
+                $newcat->per_c_active = 'N/A';
+                $newcat->guest = 0;
+                $newcat->keyed = 0;
+                $newcat->per_c_guest = 'N/A';
+
+                $data[] = $newcat;
+            }
+        }
 
         $cache->set($cachekey, $data);
 
