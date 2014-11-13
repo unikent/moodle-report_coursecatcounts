@@ -230,9 +230,11 @@ class activity_report
                     THEN 1
                     ELSE 0
                 END inactive_activity_count
+
             FROM {course} c
             INNER JOIN {course_categories} cc
                 ON cc.id = c.category
+
             LEFT OUTER JOIN (
                 SELECT c.id as courseid, COALESCE(COUNT(ra.id), 0) cnt
                 FROM {course} c
@@ -263,6 +265,7 @@ class activity_report
                 GROUP BY cm.course, cm.module
             ) namedmods
                 ON namedmods.courseid = c.id
+
             WHERE c.startdate BETWEEN :startdate and :enddate
             GROUP BY c.id
 SQL;

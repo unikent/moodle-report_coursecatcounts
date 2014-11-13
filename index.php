@@ -40,14 +40,22 @@ if (!$category && $data = $form->get_data()) {
 $renderer = $PAGE->get_renderer('report_coursecatcounts');
 
 if ($format == 'screen') {
+    if (!$form->is_submitted()) {
+        $startdate = optional_param('startdate', 0, PARAM_INT);
+        $enddate = optional_param('enddate', 0, PARAM_INT);
+
+        $PAGE->requires->js_init_call('M.report_categories.init', array($startdate, $enddate), false, array(
+            'name' => 'report_coursecatcounts',
+            'fullpath' => '/report/coursecatcounts/scripts/categories.js'
+        ));
+    }
+
     echo $OUTPUT->header();
     echo $OUTPUT->heading("Category-Based Course Report");
 }
 
 // Check the form was not submitted this time around.
 if (!$form->is_submitted()) {
-    $startdate = optional_param('startdate', 0, PARAM_INT);
-    $enddate = optional_param('enddate', 0, PARAM_INT);
     $urlparams = array(
         'startdate' => $startdate,
         'enddate' => $enddate
