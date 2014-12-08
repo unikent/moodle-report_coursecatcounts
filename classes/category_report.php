@@ -40,6 +40,21 @@ class category_report
             return $content;
         }
 
+        $params = array();
+        $datesql = "INNER JOIN (SELECT 'valid' period) yr ON 1=1";
+        if ($startdate < $enddate) {
+            $datesql = <<<SQL
+                INNER JOIN (
+                    SELECT :startdate start,:enddate ending, 'valid' period
+                ) yr
+                    ON c.startdate BETWEEN yr.start AND yr.ending
+SQL;
+            $params = array(
+                'startdate' => $startdate,
+                'enddate' => $enddate
+            );
+        }
+
         $sql = <<<SQL
         SELECT
             cco.id as categoryid,
@@ -142,10 +157,7 @@ class category_report
             ) per_c_guest
         FROM {course} c
 
-        INNER JOIN (
-            SELECT :startdate start,:enddate ending, 'valid' period
-        ) yr
-            ON c.startdate BETWEEN yr.start AND yr.ending
+        $datesql
 
         RIGHT OUTER JOIN {course_categories} cc
             ON c.category = cc.id
@@ -204,10 +216,7 @@ class category_report
         ORDER BY total_from_course DESC
 SQL;
 
-        $data = $DB->get_records_sql($sql, array(
-            'startdate' => $startdate,
-            'enddate' => $enddate
-        ));
+        $data = $DB->get_records_sql($sql, $params);
 
         // Because I don't want to ruin the above query...
         // Create a list of known paths.
@@ -255,6 +264,18 @@ SQL;
         $cache = \cache::make('report_coursecatcounts', 'categorycounts');
         if ($content = $cache->get($cachekey)) {
             return $content;
+        }
+
+        $params = array(
+            'categorya' => "%/" . $categoryid,
+            'categoryb' => "%/" . $categoryid . "/%"
+        );
+
+        $datesql = "";
+        if ($startdate < $enddate) {
+            $datesql = "c.startdate BETWEEN :startdate AND :enddate";
+            $params['startdate'] = $startdate;
+            $params['enddate'] = $enddate;
         }
 
         $sql = <<<SQL
@@ -311,16 +332,10 @@ SQL;
         ) mods
             ON mods.courseid = c.id
 
-        WHERE c.startdate BETWEEN :startdate AND :enddate
-        AND (cc.path LIKE :categorya OR cc.path LIKE :categoryb)
+        WHERE $datesql AND (cc.path LIKE :categorya OR cc.path LIKE :categoryb)
 SQL;
 
-        $data = $DB->get_records_sql($sql, array(
-            'startdate' => $startdate,
-            'enddate' => $enddate,
-            'categorya' => "%/" . $categoryid,
-            'categoryb' => "%/" . $categoryid . "/%"
-        ));
+        $data = $DB->get_records_sql($sql, $params);
 
         $cache->set($cachekey, $data);
 

@@ -59,7 +59,7 @@ if (!$form->is_submitted()) {
     );
 
     // If we dont have a start date or an end date, we cannot continue.
-    if ($startdate > 0 && $enddate > 0 && $startdate < $enddate) {
+    if (($startdate == 0 && $enddate == 0) || $startdate < $enddate) {
         // Output to CSV.
         if ($format == 'csv') {
             if (!$category) {
@@ -98,7 +98,9 @@ if (!$form->is_submitted()) {
         }
 
         // Update dates in form.
-        $form->set_from_time($startdate, $enddate);
+        if ($startdate > 0) {
+            $form->set_from_time($startdate, $enddate);
+        }
     }
 }
 

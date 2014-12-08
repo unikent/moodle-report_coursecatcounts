@@ -37,6 +37,7 @@ $startdate = optional_param('start', 0, PARAM_INT);
 $enddate = optional_param('end', 0, PARAM_INT);
 $format = optional_param('format', 'screen', PARAM_ALPHA);
 $format = $format == 'csv' ? 'csv' : 'screen';
+$table = '';
 
 if ($activity > 0) {
     $activityname = $DB->get_field('modules', 'name', array(
@@ -136,9 +137,12 @@ $PAGE->requires->js_init_call('M.report_activities.init', array($activity, $star
 echo $OUTPUT->header();
 echo $OUTPUT->heading("Category-Based Activity Report");
 
-if ($startdate > 0 || $enddate > 0) {
+if ($activity > 0) {
     echo \html_writer::table($table);
     echo \html_writer::empty_tag('hr');
+}
+
+if ($startdate > 0 || $enddate > 0) {
     echo $OUTPUT->heading('New Report', 4);
 
     $form->set_from_time($startdate, $enddate);
