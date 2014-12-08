@@ -153,6 +153,21 @@ class activity_report
             return $content;
         }
 
+        $datesql = '';
+        $params = array(
+            'activity1' => $this->_activity,
+            'activity2' => $this->_activity,
+            'activity3' => $this->_activity,
+            'activity4' => $this->_activity,
+            'activity5' => $this->_activity
+        );
+
+        if ($this->_startdate < $this->_enddate) {
+            $datesql = 'WHERE c.startdate BETWEEN :startdate and :enddate';
+            $params['startdate'] = $this->_startdate;
+            $params['enddate'] = $this->_enddate;
+        }
+
         $sql = <<<SQL
             SELECT
                 c.id,
@@ -271,19 +286,11 @@ class activity_report
             ) namedmods
                 ON namedmods.courseid = c.id
 
-            WHERE c.startdate BETWEEN :startdate and :enddate
+            $datesql
             GROUP BY c.id
 SQL;
 
-        $data = $DB->get_records_sql($sql, array(
-            'activity1' => $this->_activity,
-            'activity2' => $this->_activity,
-            'activity3' => $this->_activity,
-            'activity4' => $this->_activity,
-            'activity5' => $this->_activity,
-            'startdate' => $this->_startdate,
-            'enddate' => $this->_enddate
-        ));
+        $data = $DB->get_records_sql($sql, $params);
 
         $cache->set($cachekey, $data);
         return $data;

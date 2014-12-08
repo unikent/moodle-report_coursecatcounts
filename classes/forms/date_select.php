@@ -57,8 +57,11 @@ class date_select extends \moodleform
             $range = range(2004, ((int)date("Y")) + 2);
             $dategroup[] = $mform->createElement('select', $name . '_year', '', array_combine($range, $range));
 
+
             $mform->addGroup($dategroup, $name, $text);
         }
+        
+        $mform->addElement('checkbox', 'showall', '', 'Show all (ignore dates)');
 
         $this->add_action_buttons(false, "Run Report");
     }
@@ -112,6 +115,12 @@ class date_select extends \moodleform
             return false;
         }
 
+        if (isset($data->showall) && $data->showall == 1) {
+            $data->startdate = 0;
+            $data->enddate = 0;
+            return $data;
+        }
+
         return $this->convert_dates($data);
     }
 
@@ -119,7 +128,13 @@ class date_select extends \moodleform
      * Form validation.
      */
     public function validation($data, $files) {
-        $data = $this->convert_dates((object)$data);
+        $data = (object)$data;
+
+        if (isset($data->showall) && $data->showall == 1) {
+            return array();
+        }
+
+        $data = $this->convert_dates($data);
 
         $errors = array();
 
