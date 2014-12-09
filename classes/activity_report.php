@@ -198,7 +198,7 @@ class activity_report
 
                 /* Active Modules */
                 CASE WHEN (stud.cnt > 1)
-                AND mods.cnt > 0
+                AND mods.cnt > 2
                 AND mods.cnt2 > 0
                 AND c.visible = 1
                     THEN 1
@@ -207,7 +207,7 @@ class activity_report
 
                 /* Active Modules with activity */
                 CASE WHEN (stud.cnt > 1)
-                AND mods.cnt > 0
+                AND mods.cnt > 2
                 AND mods.cnt2 > 0
                 AND c.visible = 1
                 AND namedmods.moduleid = :activity3
@@ -217,7 +217,7 @@ class activity_report
 
                 /* Resting Modules */
                 CASE WHEN (stud.cnt > 1)
-                AND mods.cnt > 0
+                AND mods.cnt > 2
                 AND mods.cnt2 > 0
                 AND c.visible = 0
                     THEN 1
@@ -226,7 +226,7 @@ class activity_report
 
                 /* Resting Modules with activity */
                 CASE WHEN (stud.cnt > 1)
-                AND mods.cnt > 0
+                AND mods.cnt > 2
                 AND mods.cnt2 > 0
                 AND c.visible = 0
                 AND namedmods.moduleid = :activity4
@@ -236,7 +236,7 @@ class activity_report
 
                 /* Inactive Modules */
                 CASE WHEN (stud.cnt > 1)
-                AND (mods.cnt < 1)
+                AND (mods.cnt < 2)
                 AND (mods.cnt2 < 1)
                     THEN 1
                     ELSE 0
@@ -244,7 +244,7 @@ class activity_report
 
                 /* Inactive Modules with activity */
                 CASE WHEN (stud.cnt > 1)
-                AND (mods.cnt < 1)
+                AND (mods.cnt < 2)
                 AND (mods.cnt2 < 1)
                 AND namedmods.moduleid = :activity5
                     THEN 1
@@ -273,8 +273,7 @@ class activity_report
                 SELECT c.id as courseid, COALESCE(COUNT(cm.id), 0) cnt, COALESCE(COUNT(DISTINCT cm.module), 0) cnt2
                 FROM {course} c
                 LEFT OUTER JOIN {course_modules} cm
-                    ON (c.timecreated BETWEEN cm.added - 120 and cm.added + 120)
-                    AND c.id = cm.course
+                    ON c.id = cm.course
                 GROUP BY c.id
             ) mods
                 ON mods.courseid = c.id
