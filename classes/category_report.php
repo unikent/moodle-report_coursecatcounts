@@ -273,7 +273,7 @@ SQL;
 
         $datesql = "";
         if ($startdate < $enddate) {
-            $datesql = "c.startdate BETWEEN :startdate AND :enddate";
+            $datesql = "c.startdate BETWEEN :startdate AND :enddate AND";
             $params['startdate'] = $startdate;
             $params['enddate'] = $enddate;
         }
@@ -332,7 +332,7 @@ SQL;
         ) mods
             ON mods.courseid = c.id
 
-        WHERE $datesql AND (cc.path LIKE :categorya OR cc.path LIKE :categoryb)
+        WHERE $datesql (cc.path LIKE :categorya OR cc.path LIKE :categoryb)
 SQL;
 
         $data = $DB->get_records_sql($sql, $params);
