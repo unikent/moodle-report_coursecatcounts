@@ -79,7 +79,7 @@ SQL;
 
             SUM(
                 CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
-                AND mods.cnt > 0
+                AND mods.cnt > 2
                 AND mods.cnt2 > 0
                 AND c.visible=1
                     THEN 1
@@ -89,7 +89,7 @@ SQL;
 
             SUM(
                 CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
-                AND mods.cnt > 0 AND mods.cnt2 > 0 AND c.visible=0
+                AND mods.cnt > 2 AND mods.cnt2 > 0 AND c.visible=0
                     THEN 1
                     ELSE 0
                 END
@@ -97,7 +97,7 @@ SQL;
 
             SUM(
                 CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
-                AND (mods.cnt < 1 OR mods.cnt IS NULL)
+                AND (mods.cnt < 2 OR mods.cnt IS NULL)
                 AND (mods.cnt2 < 1 OR mods.cnt2 IS NULL)
                     THEN 1
                     ELSE 0
@@ -107,7 +107,7 @@ SQL;
             COALESCE(
                 SUM(
                     CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
-                    AND mods.cnt > 0
+                    AND mods.cnt > 2
                     AND mods.cnt2 > 0
                     AND c.visible = 1
                         THEN 1
@@ -146,7 +146,7 @@ SQL;
                     END
                 ) * 100 / SUM(
                     CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
-                    AND mods.cnt > 0
+                    AND mods.cnt > 2
                     AND mods.cnt2 > 0
                     AND c.visible = 1
                         THEN 1
@@ -183,8 +183,7 @@ SQL;
             SELECT c.id as courseid, COALESCE(COUNT(cm.id), 0) cnt, COALESCE(COUNT(DISTINCT cm.module), 0) cnt2
             FROM {course} c
             LEFT OUTER JOIN {course_modules} cm
-                ON (c.timecreated BETWEEN cm.added - 120 and cm.added + 120)
-                AND c.id = cm.course
+                ON c.id = cm.course
             GROUP BY c.id
         ) mods
             ON mods.courseid = c.id
@@ -273,7 +272,7 @@ SQL;
 
         $datesql = "";
         if ($startdate < $enddate) {
-            $datesql = "c.startdate BETWEEN :startdate AND :enddate";
+            $datesql = "c.startdate BETWEEN :startdate AND :enddate AND";
             $params['startdate'] = $startdate;
             $params['enddate'] = $enddate;
         }
@@ -288,13 +287,13 @@ SQL;
             CASE WHEN (stud.cnt<2 OR stud.cnt IS NULL)
             THEN 'ceased'
             ELSE
-                CASE WHEN (stud.cnt>1 AND stud.cnt IS NOT NULL) AND mods.cnt>0 AND mods.cnt2>0 AND c.visible=1
+                CASE WHEN (stud.cnt>1 AND stud.cnt IS NOT NULL) AND mods.cnt>2 AND mods.cnt2>0 AND c.visible=1
                 THEN 'active'
                 ELSE
-                    CASE WHEN (stud.cnt>1 AND stud.cnt IS NOT NULL) AND mods.cnt>0 AND mods.cnt2>0 AND c.visible=0
+                    CASE WHEN (stud.cnt>1 AND stud.cnt IS NOT NULL) AND mods.cnt>2 AND mods.cnt2>0 AND c.visible=0
                     THEN 'resting'
                     ELSE
-                        CASE WHEN (stud.cnt>1 AND stud.cnt IS NOT NULL) AND (mods.cnt<1 OR mods.cnt IS NULL) AND (mods.cnt2<1 OR mods.cnt2 IS NULL)
+                        CASE WHEN (stud.cnt>1 AND stud.cnt IS NOT NULL) AND (mods.cnt<2 OR mods.cnt IS NULL) AND (mods.cnt2<1 OR mods.cnt2 IS NULL)
                         THEN 'inactive'
                         ELSE
                             'unknown'
@@ -326,13 +325,12 @@ SQL;
             SELECT c.id as courseid, COALESCE(COUNT(cm.id), 0) cnt, COALESCE(COUNT(DISTINCT cm.module), 0) cnt2
             FROM {course} c
             LEFT OUTER JOIN {course_modules} cm
-                ON (c.timecreated BETWEEN cm.added - 120 and cm.added + 120)
-                AND c.id = cm.course
+                ON c.id = cm.course
             GROUP BY c.id
         ) mods
             ON mods.courseid = c.id
 
-        WHERE $datesql AND (cc.path LIKE :categorya OR cc.path LIKE :categoryb)
+        WHERE $datesql (cc.path LIKE :categorya OR cc.path LIKE :categoryb)
 SQL;
 
         $data = $DB->get_records_sql($sql, $params);
