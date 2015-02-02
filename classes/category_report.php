@@ -79,8 +79,7 @@ SQL;
 
             SUM(
                 CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
-                AND mods.cnt > 2
-                AND mods.cnt2 > 0
+                AND ((sections.nes > 1 AND sections.len > 0) OR mods.cnt>2)
                 AND c.visible=1
                     THEN 1
                     ELSE 0
@@ -89,7 +88,8 @@ SQL;
 
             SUM(
                 CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
-                AND mods.cnt > 2 AND mods.cnt2 > 0 AND c.visible=0
+                AND ((sections.nes > 1 AND sections.len > 0) OR mods.cnt>2)
+                AND c.visible=0
                     THEN 1
                     ELSE 0
                 END
@@ -97,8 +97,8 @@ SQL;
 
             SUM(
                 CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
+                AND (sections.nes <= 1 OR sections.len <= 0)
                 AND (mods.cnt < 2 OR mods.cnt IS NULL)
-                AND (mods.cnt2 < 1 OR mods.cnt2 IS NULL)
                     THEN 1
                     ELSE 0
                 END
@@ -107,8 +107,7 @@ SQL;
             COALESCE(
                 SUM(
                     CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
-                    AND mods.cnt > 2
-                    AND mods.cnt2 > 0
+                    AND ((sections.nes > 1 AND sections.len > 0) OR mods.cnt>2)
                     AND c.visible = 1
                         THEN 1
                         ELSE 0
@@ -146,8 +145,7 @@ SQL;
                     END
                 ) * 100 / SUM(
                     CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
-                    AND mods.cnt > 2
-                    AND mods.cnt2 > 0
+                    AND ((sections.nes > 1 AND sections.len > 0) OR mods.cnt>2)
                     AND c.visible = 1
                         THEN 1
                         ELSE 0
@@ -187,6 +185,15 @@ SQL;
             GROUP BY c.id
         ) mods
             ON mods.courseid = c.id
+
+        LEFT OUTER JOIN (
+            SELECT c.id as courseid, LENGTH(GROUP_CONCAT(cs.summary)) as len, COALESCE(COUNT(cs.id), 0) as nes
+            FROM {course} c
+            LEFT OUTER JOIN {course_sections} cs
+                ON cs.course = c.id AND LENGTH(cs.summary) > 0
+            GROUP BY c.id
+        ) sections
+            ON sections.courseid = c.id
 
         LEFT OUTER JOIN (
             SELECT
@@ -287,13 +294,13 @@ SQL;
             CASE WHEN (stud.cnt<2 OR stud.cnt IS NULL)
             THEN 'ceased'
             ELSE
-                CASE WHEN (stud.cnt>1 AND stud.cnt IS NOT NULL) AND mods.cnt>2 AND mods.cnt2>0 AND c.visible=1
+                CASE WHEN (stud.cnt>1 AND stud.cnt IS NOT NULL) AND ((sections.nes > 1 AND sections.len > 0) OR mods.cnt>2) AND c.visible=1
                 THEN 'active'
                 ELSE
-                    CASE WHEN (stud.cnt>1 AND stud.cnt IS NOT NULL) AND mods.cnt>2 AND mods.cnt2>0 AND c.visible=0
+                    CASE WHEN (stud.cnt>1 AND stud.cnt IS NOT NULL) AND ((sections.nes > 1 AND sections.len > 0) OR mods.cnt>2) AND c.visible=0
                     THEN 'resting'
                     ELSE
-                        CASE WHEN (stud.cnt>1 AND stud.cnt IS NOT NULL) AND (mods.cnt<2 OR mods.cnt IS NULL) AND (mods.cnt2<1 OR mods.cnt2 IS NULL)
+                        CASE WHEN (stud.cnt>1 AND stud.cnt IS NOT NULL) AND (sections.nes <= 1 OR sections.len <= 0) AND (mods.cnt<2 OR mods.cnt IS NULL)
                         THEN 'inactive'
                         ELSE
                             'unknown'
@@ -329,6 +336,15 @@ SQL;
             GROUP BY c.id
         ) mods
             ON mods.courseid = c.id
+
+        LEFT OUTER JOIN (
+            SELECT c.id as courseid, LENGTH(GROUP_CONCAT(cs.summary)) as len, COALESCE(COUNT(cs.id), 0) as nes
+            FROM {course} c
+            LEFT OUTER JOIN {course_sections} cs
+                ON cs.course = c.id AND LENGTH(cs.summary) > 0
+            GROUP BY c.id
+        ) sections
+            ON sections.courseid = c.id
 
         WHERE $datesql (cc.path LIKE :categorya OR cc.path LIKE :categoryb)
 SQL;
