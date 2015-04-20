@@ -37,4 +37,10 @@ $ADMIN->add('reports', new admin_externalpage(
     new \moodle_url("/report/coursecatcounts/activity.php")
 ));
 
+$ADMIN->add('reports', new admin_externalpage(
+    'manualcoursereport',
+    'Manual Courses',
+    new \moodle_url("/report/coursecatcounts/manual_courses.php")
+));
+
 $settings = null;
