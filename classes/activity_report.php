@@ -97,8 +97,8 @@ class activity_report
         }
 
         $data = array();
-        $moduledata = $this->get_modules();
 
+        // Initialise data.
         $categories = $DB->get_records('course_categories');
         foreach ($categories as $category) {
             $data[$category->id] = array(
@@ -116,21 +116,33 @@ class activity_report
                 'inactive' => 0,
                 'inactive_activity_count' => 0
             );
+        }
 
+        // Update categories with module info.
+        $moduledata = $this->get_modules();
+        foreach ($moduledata as $module) {
+            // Grab related category.
+            $category = $categories[$module->catid];
             $path = explode('/', $category->path);
-            foreach ($moduledata as $module) {
-                if (in_array($module->catid, $path)) {
-                    $data[$category->id]['total'] += 1;
-                    foreach ($module as $col => $val) {
-                        $val = (int)$val;
-                        if (isset($data[$category->id][$col]) && $val > 0) {
-                            $data[$category->id][$col] += $val;
-                        }
+
+            foreach ($path as $catid) {
+                if (!isset($data[$catid])) {
+                    continue;
+                }
+
+                $data[$catid]['total'] += 1;
+                foreach ($module as $col => $val) {
+                    $val = (int)$val;
+                    if (isset($data[$catid][$col]) && $val > 0) {
+                        $data[$catid][$col] += $val;
                     }
                 }
             }
+        }
 
-            $data[$category->id] = (object)$data[$category->id];
+        // Convert data to stdClasses.
+        foreach ($data as $k => $v) {
+            $data[$k] = (object)$v;
         }
 
         uasort($data, function ($a, $b) {
