@@ -21,6 +21,8 @@ admin_externalpage_setup('coursemodulecountsreport', '', null, '', array(
     'pagelayout' => 'report'
 ));
 
+$PAGE->set_context(\context_system::instance());
+
 $form = new \report_coursecatcounts\forms\activity_select();
 
 // Redirect if there is data.
