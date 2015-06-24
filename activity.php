@@ -16,7 +16,6 @@
 
 require_once(dirname(__FILE__) . '/../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
-require_once($CFG->libdir . '/csvlib.class.php');
 
 admin_externalpage_setup('coursemodulecountsreport', '', null, '', array(
     'pagelayout' => 'report'
@@ -50,6 +49,8 @@ if ($activity > 0) {
 
     // Run CSV.
     if ($format == 'csv') {
+        require_once($CFG->libdir . '/csvlib.class.php');
+
         $export = new \csv_export_writer();
         $export->set_filename('Activity-Report-' . $activityname . '-' . $startdate . '-' . $enddate);
         $export->add_data(array("Report for '{$activityname}' activity."));
