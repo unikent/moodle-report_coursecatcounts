@@ -67,15 +67,15 @@ class activity_report
             return $content;
         }
 
-        $category = $DB->get_record('course_categories', array(
-            'id' => $catid
-        ));
-        $path = explode('/', $category->path);
+        $categories = $DB->get_records('course_categories');
 
         $data = array();
         $moduledata = $this->get_modules();
         foreach ($moduledata as $module) {
-            if (in_array($module->catid, $path)) {
+            $category = $categories[$module->catid];
+            $path = explode('/', $category->path);
+
+            if (in_array($catid, $path)) {
                 $data[] = $module;
             }
         }
