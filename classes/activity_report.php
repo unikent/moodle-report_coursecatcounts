@@ -167,11 +167,7 @@ class activity_report
 
         $datesql = '';
         $params = array(
-            'activity1' => $this->_activity,
-            'activity2' => $this->_activity,
-            'activity3' => $this->_activity,
-            'activity4' => $this->_activity,
-            'activity5' => $this->_activity
+            'activity' => $this->_activity
         );
 
         if ($this->_startdate < $this->_enddate) {
@@ -190,7 +186,7 @@ class activity_report
                 mods.cnt2 as unique_activity_count,
 
                 /* Total Modules with activity */
-                CASE WHEN (namedmods.moduleid = :activity1)
+                CASE WHEN (namedmods.cnt > 1)
                     THEN 1
                     ELSE 0
                 END total_activity_count,
@@ -203,7 +199,7 @@ class activity_report
 
                 /* Ceased Modules with activity */
                 CASE WHEN (stud.cnt < 2)
-                AND (namedmods.moduleid = :activity2)
+                AND (namedmods.cnt > 1)
                     THEN 1
                     ELSE 0
                 END ceased_activity_count,
@@ -222,7 +218,7 @@ class activity_report
                 AND mods.cnt > 2
                 AND mods.cnt2 > 0
                 AND c.visible = 1
-                AND namedmods.moduleid = :activity3
+                AND namedmods.cnt > 1
                     THEN 1
                     ELSE 0
                 END active_activity_count,
@@ -241,7 +237,7 @@ class activity_report
                 AND mods.cnt > 2
                 AND mods.cnt2 > 0
                 AND c.visible = 0
-                AND namedmods.moduleid = :activity4
+                AND namedmods.cnt > 1
                     THEN 1
                     ELSE 0
                 END resting_activity_count,
@@ -258,7 +254,7 @@ class activity_report
                 CASE WHEN (stud.cnt > 1)
                 AND (mods.cnt < 2)
                 AND (mods.cnt2 < 1)
-                AND namedmods.moduleid = :activity5
+                AND namedmods.cnt > 1
                     THEN 1
                     ELSE 0
                 END inactive_activity_count
@@ -291,9 +287,10 @@ class activity_report
                 ON mods.courseid = c.id
 
             LEFT OUTER JOIN (
-                SELECT cm.course courseid, cm.module as moduleid, COUNT(cm.id) cnt
+                SELECT cm.course courseid, COUNT(cm.id) cnt
                 FROM {course_modules} cm
-                GROUP BY cm.course, cm.module
+                WHERE cm.module = :activity
+                GROUP BY cm.course
             ) namedmods
                 ON namedmods.courseid = c.id
 
