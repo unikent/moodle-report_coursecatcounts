@@ -21,6 +21,8 @@ admin_externalpage_setup('coursemodulecountsreport', '', null, '', array(
     'pagelayout' => 'report'
 ));
 
+$PAGE->set_context(\context_system::instance());
+
 $form = new \report_coursecatcounts\forms\activity_select();
 
 // Redirect if there is data.
@@ -49,6 +51,8 @@ if ($activity > 0) {
 
     // Run CSV.
     if ($format == 'csv') {
+        require_once($CFG->libdir . '/csvlib.class.php');
+
         $export = new \csv_export_writer();
         $export->set_filename('Activity-Report-' . $activityname . '-' . $startdate . '-' . $enddate);
         $export->add_data(array("Report for '{$activityname}' activity."));

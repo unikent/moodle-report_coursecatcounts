@@ -21,6 +21,8 @@ admin_externalpage_setup('coursecatcountsreport', '', null, '', array(
     'pagelayout' => 'report'
 ));
 
+$PAGE->set_context(\context_system::instance());
+
 $category = optional_param('category', false, PARAM_INT);
 $startdate = optional_param('start', 0, PARAM_INT);
 $enddate = optional_param('end', 0, PARAM_INT);

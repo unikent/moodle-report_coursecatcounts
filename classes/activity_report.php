@@ -67,15 +67,15 @@ class activity_report
             return $content;
         }
 
-        $category = $DB->get_record('course_categories', array(
-            'id' => $catid
-        ));
-        $path = explode('/', $category->path);
+        $categories = $DB->get_records('course_categories');
 
         $data = array();
         $moduledata = $this->get_modules();
         foreach ($moduledata as $module) {
-            if (in_array($module->catid, $path)) {
+            $category = $categories[$module->catid];
+            $path = explode('/', $category->path);
+
+            if (in_array($catid, $path)) {
                 $data[] = $module;
             }
         }
@@ -97,8 +97,8 @@ class activity_report
         }
 
         $data = array();
-        $moduledata = $this->get_modules();
 
+        // Initialise data.
         $categories = $DB->get_records('course_categories');
         foreach ($categories as $category) {
             $data[$category->id] = array(
@@ -116,21 +116,33 @@ class activity_report
                 'inactive' => 0,
                 'inactive_activity_count' => 0
             );
+        }
 
+        // Update categories with module info.
+        $moduledata = $this->get_modules();
+        foreach ($moduledata as $module) {
+            // Grab related category.
+            $category = $categories[$module->catid];
             $path = explode('/', $category->path);
-            foreach ($moduledata as $module) {
-                if (in_array($module->catid, $path)) {
-                    $data[$category->id]['total'] += 1;
-                    foreach ($module as $col => $val) {
-                        $val = (int)$val;
-                        if (isset($data[$category->id][$col]) && $val > 0) {
-                            $data[$category->id][$col] += $val;
-                        }
+
+            foreach ($path as $catid) {
+                if (!isset($data[$catid])) {
+                    continue;
+                }
+
+                $data[$catid]['total'] += 1;
+                foreach ($module as $col => $val) {
+                    $val = (int)$val;
+                    if (isset($data[$catid][$col]) && $val > 0) {
+                        $data[$catid][$col] += $val;
                     }
                 }
             }
+        }
 
-            $data[$category->id] = (object)$data[$category->id];
+        // Convert data to stdClasses.
+        foreach ($data as $k => $v) {
+            $data[$k] = (object)$v;
         }
 
         uasort($data, function ($a, $b) {
@@ -155,11 +167,7 @@ class activity_report
 
         $datesql = '';
         $params = array(
-            'activity1' => $this->_activity,
-            'activity2' => $this->_activity,
-            'activity3' => $this->_activity,
-            'activity4' => $this->_activity,
-            'activity5' => $this->_activity
+            'activity' => $this->_activity
         );
 
         if ($this->_startdate < $this->_enddate) {
@@ -178,7 +186,7 @@ class activity_report
                 mods.cnt2 as unique_activity_count,
 
                 /* Total Modules with activity */
-                CASE WHEN (namedmods.moduleid = :activity1)
+                CASE WHEN (namedmods.cnt > 1)
                     THEN 1
                     ELSE 0
                 END total_activity_count,
@@ -191,7 +199,7 @@ class activity_report
 
                 /* Ceased Modules with activity */
                 CASE WHEN (stud.cnt < 2)
-                AND (namedmods.moduleid = :activity2)
+                AND (namedmods.cnt > 1)
                     THEN 1
                     ELSE 0
                 END ceased_activity_count,
@@ -210,7 +218,7 @@ class activity_report
                 AND mods.cnt > 2
                 AND mods.cnt2 > 0
                 AND c.visible = 1
-                AND namedmods.moduleid = :activity3
+                AND namedmods.cnt > 1
                     THEN 1
                     ELSE 0
                 END active_activity_count,
@@ -229,7 +237,7 @@ class activity_report
                 AND mods.cnt > 2
                 AND mods.cnt2 > 0
                 AND c.visible = 0
-                AND namedmods.moduleid = :activity4
+                AND namedmods.cnt > 1
                     THEN 1
                     ELSE 0
                 END resting_activity_count,
@@ -246,7 +254,7 @@ class activity_report
                 CASE WHEN (stud.cnt > 1)
                 AND (mods.cnt < 2)
                 AND (mods.cnt2 < 1)
-                AND namedmods.moduleid = :activity5
+                AND namedmods.cnt > 1
                     THEN 1
                     ELSE 0
                 END inactive_activity_count
@@ -279,9 +287,10 @@ class activity_report
                 ON mods.courseid = c.id
 
             LEFT OUTER JOIN (
-                SELECT cm.course courseid, cm.module as moduleid, COUNT(cm.id) cnt
+                SELECT cm.course courseid, COUNT(cm.id) cnt
                 FROM {course_modules} cm
-                GROUP BY cm.course, cm.module
+                WHERE cm.module = :activity
+                GROUP BY cm.course
             ) namedmods
                 ON namedmods.courseid = c.id
 
