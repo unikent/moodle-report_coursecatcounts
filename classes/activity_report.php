@@ -186,7 +186,7 @@ class activity_report
                 mods.cnt2 as unique_activity_count,
 
                 /* Total Modules with activity */
-                CASE WHEN (namedmods.cnt > 1)
+                CASE WHEN (namedmods.cnt > 0)
                     THEN 1
                     ELSE 0
                 END total_activity_count,
@@ -199,7 +199,7 @@ class activity_report
 
                 /* Ceased Modules with activity */
                 CASE WHEN (stud.cnt < 2)
-                AND (namedmods.cnt > 1)
+                AND (namedmods.cnt > 0)
                     THEN 1
                     ELSE 0
                 END ceased_activity_count,
@@ -218,7 +218,7 @@ class activity_report
                 AND mods.cnt > 2
                 AND mods.cnt2 > 0
                 AND c.visible = 1
-                AND namedmods.cnt > 1
+                AND namedmods.cnt > 0
                     THEN 1
                     ELSE 0
                 END active_activity_count,
@@ -237,7 +237,7 @@ class activity_report
                 AND mods.cnt > 2
                 AND mods.cnt2 > 0
                 AND c.visible = 0
-                AND namedmods.cnt > 1
+                AND namedmods.cnt > 0
                     THEN 1
                     ELSE 0
                 END resting_activity_count,
@@ -254,7 +254,7 @@ class activity_report
                 CASE WHEN (stud.cnt > 1)
                 AND (mods.cnt < 2)
                 AND (mods.cnt2 < 1)
-                AND namedmods.cnt > 1
+                AND namedmods.cnt > 0
                     THEN 1
                     ELSE 0
                 END inactive_activity_count
