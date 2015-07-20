@@ -34,15 +34,13 @@ defined('MOODLE_INTERNAL') || die();
  */
 class category
 {
-    private $_data;
-    private $_courses;
+    use \local_kent\traits\datapod;
 
     /**
      * Constructor.
      */
     public function __construct($data) {
-        $this->_data = $data;
-        $this->_courses = array();
+        $this->set_data($data);
     }
 
     /**
@@ -51,26 +49,31 @@ class category
     public function get_courses() {
         global $DB;
 
-        if (!empty($this->_courses)) {
-            return $this->_courses;
+        if (isset($this->courses)) {
+            return $this->courses;
         }
+
+        $data = array();
 
         $sql = <<<SQL
             SELECT c.*
             FROM {course} c
             INNER JOIN {course_categories} cc
                 ON cc.path LIKE :path OR cc.path LIKE :path2
+            GROUP BY c.id
 SQL;
 
         $courses = $DB->get_records_sql($sql, array(
-            'path' => "{$this->_data->path}",
-            'path2' => "{$this->_data->path}/%"
+            'path' => "{$this->path}",
+            'path2' => "{$this->path}/%"
         ));
         foreach ($courses as $course) {
-            $this->_courses[] = new course($course);
+            $data[] = new course($course);
         }
 
-        return $this->_courses;
+        $this->courses = $data;
+
+        return $data;
     }
 
     /**

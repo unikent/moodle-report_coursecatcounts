@@ -251,52 +251,49 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
         $table->attributes['class'] = 'admintable generaltable';
         $table->data = array();
 
-        $report = new \report_coursecatcounts\category_report();
-        $data = $report->get_global_data($startdate, $enddate);
-        foreach ($data as $row) {
-            $category = str_pad($row->name, substr_count($row->path, 1), '-');
-            $category = \html_writer::tag('a', $category, array(
-                'href' => new \moodle_url('/report/coursecatcounts/index.php', array(
-                    'category' => $row->categoryid,
-                    'startdate' => $startdate,
-                    'enddate' => $enddate
-                ))
-            ));
+        $report = new \report_coursecatcounts\core();
+        $data = $report->get_categories();
+        foreach ($data as $category) {
+            $link = \html_writer::link(new \moodle_url('/report/coursecatcounts/index.php', array(
+                'category' => $category->id,
+                'startdate' => $startdate,
+                'enddate' => $enddate
+            )), str_pad($category->name, substr_count($category->path, 1), '-'));
 
-            $totalfromcourse = new html_table_cell($row->total_from_course);
+            $totalfromcourse = new html_table_cell($category->total_from_course);
             $totalfromcourse->attributes['class'] = 'datacell';
-            $totalfromcourse->attributes['catid'] = $row->categoryid;
+            $totalfromcourse->attributes['catid'] = $category->id;
             $totalfromcourse->attributes['column'] = 'total_from_course';
 
-            $ceased = new html_table_cell($row->ceased);
+            $ceased = new html_table_cell($category->count_state(\report_coursecatcounts\course::STATUS_UNUSED));
             $ceased->attributes['class'] = 'datacell';
-            $ceased->attributes['catid'] = $row->categoryid;
+            $ceased->attributes['catid'] = $category->id;
             $ceased->attributes['column'] = 'ceased';
 
-            $active = new html_table_cell($row->active);
+            $active = new html_table_cell($category->count_state(\report_coursecatcounts\course::STATUS_ACTIVE));
             $active->attributes['class'] = 'datacell';
-            $active->attributes['catid'] = $row->categoryid;
+            $active->attributes['catid'] = $category->id;
             $active->attributes['column'] = 'active';
 
-            $resting = new html_table_cell($row->resting);
+            $resting = new html_table_cell($category->count_state(\report_coursecatcounts\course::STATUS_RESTING));
             $resting->attributes['class'] = 'datacell';
-            $resting->attributes['catid'] = $row->categoryid;
+            $resting->attributes['catid'] = $category->id;
             $resting->attributes['column'] = 'resting';
 
-            $inactive = new html_table_cell($row->inactive);
+            $inactive = new html_table_cell($category->count_state(\report_coursecatcounts\course::STATUS_EMPTY));
             $inactive->attributes['class'] = 'datacell';
-            $inactive->attributes['catid'] = $row->categoryid;
+            $inactive->attributes['catid'] = $category->id;
             $inactive->attributes['column'] = 'inactive';
 
             $table->data[] = new html_table_row(array(
-                new html_table_cell($category),
+                new html_table_cell($link),
                 $totalfromcourse,
                 $ceased,
                 $active,
                 $resting,
                 $inactive,
-                new html_table_cell($row->guest),
-                new html_table_cell($row->keyed)
+                new html_table_cell('TODO - guest'),
+                new html_table_cell('TODO - keyed')
             ));
         }
 

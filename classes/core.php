@@ -28,6 +28,8 @@ defined('MOODLE_INTERNAL') || die();
 
 /**
  * Report core
+ * TODO - start date / end date. Maybe run once per day and save the result?
+ *
  * *** Beta API ***
  */
 class core
