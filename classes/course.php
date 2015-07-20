@@ -27,15 +27,28 @@ namespace report_coursecatcounts;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Report core
+ * Report course.
  * *** Beta API ***
  */
-class core
+class course
 {
+    private $_id;
+
     /**
-     * Returns a list of categories.
+     * Constructor.
      */
-    public function get_categories() {
+    public function __construct($id) {
+        $this->_id = $id;
+    }
+
+    /**
+     * Returns the course's state:
+     *  - Active: Has students/content and is visible.
+     *  - Resting: Has students/content but is not visible.
+     *  - Empty: Has students but no content.
+     *  - Unused: Has no students.
+     */
+    public function get_state() {
         // TODO.
     }
 }

@@ -241,10 +241,10 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
         $table->head  = array(
             'Category',
             'Total',
-            'Ceased',
+            'Unused',
             'Active',
             'Resting',
-            'Inactive',
+            'Empty',
             'Guest',
             'Keyed'
         );
@@ -318,10 +318,10 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
         $export->add_data(array(
             'Category',
             'Total From Course',
-            'Ceased',
+            'Unused',
             'Active',
             'Resting',
-            'Inactive',
+            'Empty',
             'Guest',
             'Keyed'
         ));

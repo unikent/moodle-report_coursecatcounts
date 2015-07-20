@@ -27,15 +27,41 @@ namespace report_coursecatcounts;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Report core
+ * Report category.
  * *** Beta API ***
  */
-class core
+class category
 {
+    private $_id;
+
     /**
-     * Returns a list of categories.
+     * Constructor.
      */
-    public function get_categories() {
+    public function __construct($id) {
+        $this->_id = $id;
+    }
+
+    /**
+     * Returns a list of all courses within this category (or below).
+     */
+    public function get_courses() {
         // TODO.
+    }
+
+    /**
+     * Count all courses with a given state.
+     */
+    public function count_state($state) {
+        $total = 0;
+
+        // Loop and count.
+        $courses = $this->get_courses();
+        foreach ($courses as $course) {
+            if ($course->get_state() == $state) {
+               $total++;
+            }
+        }
+
+        return $total;
     }
 }
