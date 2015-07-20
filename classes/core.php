@@ -32,10 +32,17 @@ defined('MOODLE_INTERNAL') || die();
  */
 class core
 {
+    use \local_kent\traits\singleton;
+
     /**
      * Returns a list of categories.
      */
     public function get_categories() {
-        // TODO.
+        global $DB;
+
+        $categories = $DB->get_records('course_categories');
+        foreach ($categories as $category) {
+            yield new category($category);
+        }
     }
 }

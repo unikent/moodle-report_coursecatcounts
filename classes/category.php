@@ -29,23 +29,48 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Report category.
  * *** Beta API ***
+ *
+ * @internal
  */
 class category
 {
-    private $_id;
+    private $_data;
+    private $_courses;
 
     /**
      * Constructor.
      */
-    public function __construct($id) {
-        $this->_id = $id;
+    public function __construct($data) {
+        $this->_data = $data;
+        $this->_courses = array();
     }
 
     /**
      * Returns a list of all courses within this category (or below).
      */
     public function get_courses() {
-        // TODO.
+        global $DB;
+
+        if (!empty($this->_courses)) {
+            return $this->_courses;
+        }
+
+        $sql = <<<SQL
+            SELECT c.*
+            FROM {course} c
+            INNER JOIN {course_categories} cc
+                ON cc.path LIKE :path OR cc.path LIKE :path2
+SQL;
+
+        $courses = $DB->get_records_sql($sql, array(
+            'path' => "{$this->_data->path}",
+            'path2' => "{$this->_data->path}/%"
+        ));
+        foreach ($courses as $course) {
+            $this->_courses[] = new course($course);
+        }
+
+        return $this->_courses;
     }
 
     /**
