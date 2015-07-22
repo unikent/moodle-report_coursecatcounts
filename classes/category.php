@@ -36,6 +36,8 @@ class category
 {
     use \local_kent\traits\datapod;
 
+    private $courses;
+
     /**
      * Constructor.
      */
