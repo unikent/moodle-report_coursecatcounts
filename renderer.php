@@ -229,4 +229,185 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
 
         $export->download_file();
     }
+    /**
+     * This function will render a table.
+     *
+     * @return string HTML to output.
+     */
+    public function beta_run_global_report($csvlink) {
+        global $DB;
+
+        $table = new html_table();
+        $table->head  = array(
+            'Category',
+            'Total',
+            'Unused',
+            'Active',
+            'Resting',
+            'Empty',
+            'Guest Enabled',
+            'Guest Passworded'
+        );
+        $table->attributes['class'] = 'admintable generaltable';
+        $table->data = array();
+
+        $report = new \report_coursecatcounts\core();
+        foreach ($report->get_categories() as $category) {
+            $link = \html_writer::link(new \moodle_url('/report/coursecatcounts/beta.php', array(
+                'category' => $category->id
+            )), $category->name);
+
+            $totalfromcourse = new html_table_cell($category->count_courses());
+            $totalfromcourse->attributes['class'] = 'datacell';
+            $totalfromcourse->attributes['catid'] = $category->id;
+            $totalfromcourse->attributes['column'] = 'total_from_course';
+
+            $ceased = new html_table_cell($category->count_state(\report_coursecatcounts\course::STATUS_UNUSED));
+            $ceased->attributes['class'] = 'datacell';
+            $ceased->attributes['catid'] = $category->id;
+            $ceased->attributes['column'] = 'ceased';
+
+            $active = new html_table_cell($category->count_state(\report_coursecatcounts\course::STATUS_ACTIVE));
+            $active->attributes['class'] = 'datacell';
+            $active->attributes['catid'] = $category->id;
+            $active->attributes['column'] = 'active';
+
+            $resting = new html_table_cell($category->count_state(\report_coursecatcounts\course::STATUS_RESTING));
+            $resting->attributes['class'] = 'datacell';
+            $resting->attributes['catid'] = $category->id;
+            $resting->attributes['column'] = 'resting';
+
+            $inactive = new html_table_cell($category->count_state(\report_coursecatcounts\course::STATUS_EMPTY));
+            $inactive->attributes['class'] = 'datacell';
+            $inactive->attributes['catid'] = $category->id;
+            $inactive->attributes['column'] = 'inactive';
+
+            $guest = new html_table_cell($category->count_guest());
+            $guest->attributes['class'] = 'datacell';
+            $guest->attributes['catid'] = $category->id;
+            $guest->attributes['column'] = 'guest';
+
+            $guestpwd = new html_table_cell($category->count_guest_passwords());
+            $guestpwd->attributes['class'] = 'datacell';
+            $guestpwd->attributes['catid'] = $category->id;
+            $guestpwd->attributes['column'] = 'guestpwd';
+
+            $table->data[] = new html_table_row(array(
+                new html_table_cell($link),
+                $totalfromcourse,
+                $ceased,
+                $active,
+                $resting,
+                $inactive,
+                $guest,
+                $guestpwd
+            ));
+        }
+
+        $csvcell = new html_table_cell($csvlink);
+        $csvcell->colspan = 11;
+        $table->data[] = new html_table_row(array($csvcell));
+
+        return html_writer::table($table);
+    }
+
+    /**
+     * This function will output a CSV.
+     *
+     * @return string HTML to output.
+     */
+    public function beta_export_global_report() {
+        $export = new \csv_export_writer();
+        $export->set_filename('Category-Report');
+        $export->add_data(array(
+            'Category',
+            'Total',
+            'Unused',
+            'Active',
+            'Resting',
+            'Empty',
+            'Guest Enabled',
+            'Guest Passworded'
+        ));
+
+        $report = new \report_coursecatcounts\core();
+        foreach ($report->get_categories() as $category) {
+            $export->add_data(array(
+                s($category->name),
+                s($category->count_courses()),
+                s($category->count_state(\report_coursecatcounts\course::STATUS_UNUSED)),
+                s($category->count_state(\report_coursecatcounts\course::STATUS_ACTIVE)),
+                s($category->count_state(\report_coursecatcounts\course::STATUS_RESTING)),
+                s($category->count_state(\report_coursecatcounts\course::STATUS_EMPTY)),
+                s($category->count_guest()),
+                s($category->count_guest_passwords())
+            ));
+        }
+
+        $export->download_file();
+    }
+
+    /**
+     * This function will render a table.
+     *
+     * @return string HTML to output.
+     */
+    public function beta_run_category_report($categoryid, $csvlink) {
+        global $DB;
+
+        $table = new html_table();
+        $table->head  = array(
+            'Course',
+            'Status'
+        );
+        $table->attributes['class'] = 'admintable generaltable';
+        $table->data = array();
+
+        $report = new \report_coursecatcounts\core();
+        $category = $report->get_category($categoryid);
+        foreach ($category->get_courses() as $course) {
+            $courselink = \html_writer::tag('a', $course->shortname, array(
+                'href' => new \moodle_url('/course/view.php', array(
+                    'id' => $course->id
+                )),
+                'target' => '_blank'
+            ));
+
+            $table->data[] = new html_table_row(array(
+                new html_table_cell($courselink),
+                new html_table_cell($course->get_state(true))
+            ));
+        }
+
+        $csvcell = new html_table_cell($csvlink);
+        $csvcell->colspan = 2;
+        $table->data[] = new html_table_row(array($csvcell));
+
+        return html_writer::table($table);
+    }
+
+    /**
+     * This function will output a CSV.
+     *
+     * @return string HTML to output.
+     */
+    public function beta_export_category_report($categoryid) {
+        $export = new \csv_export_writer();
+        $export->set_filename('Course-Report-' . $categoryid);
+        $export->add_data(array(
+            'Course',
+            'Status'
+        ));
+
+        $report = new \report_coursecatcounts\category_report();
+        $data = $report->get_category_data($categoryid);
+        foreach ($data as $row) {
+            $export->add_data(array(
+                s($row->shortname),
+                s($row->status)
+            ));
+        }
+
+        $export->download_file();
+    }
 }

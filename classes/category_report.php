@@ -98,7 +98,7 @@ SQL;
             SUM(
                 CASE WHEN (stud.cnt > 1 AND stud.cnt IS NOT NULL)
                 AND (sections.nes <= 1 OR sections.len <= 0)
-                AND (mods.cnt < 2 OR mods.cnt IS NULL)
+                AND (mods.cnt <= 2 OR mods.cnt IS NULL)
                     THEN 1
                     ELSE 0
                 END
