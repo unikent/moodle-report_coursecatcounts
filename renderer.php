@@ -253,7 +253,7 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
 
         $report = new \report_coursecatcounts\core();
         foreach ($report->get_categories() as $category) {
-            $link = \html_writer::link(new \moodle_url('/report/coursecatcounts/index.php', array(
+            $link = \html_writer::link(new \moodle_url('/report/coursecatcounts/beta.php', array(
                 'category' => $category->id
             )), $category->name);
 
