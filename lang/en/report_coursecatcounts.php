@@ -18,3 +18,4 @@ $string['pluginname'] = 'Category-Based Course Counts';
 
 $string['cachedef_categorycounts'] = 'Category Count Report Data';
 $string['cachedef_activitycounts'] = 'Activity Count Report Data';
+$string['cachedef_coursefastinfo'] = 'Fast course info cache';

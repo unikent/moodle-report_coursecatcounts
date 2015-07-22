@@ -74,7 +74,7 @@ class course
             GROUP BY c.id
 SQL;
 
-        foreach ($DB->get_records($sql) as $data) {
+        foreach ($DB->get_records_sql($sql) as $data) {
             $course = new \stdClass();
             $course->enrolments = $data->cnt;
             $content[$data->courseid] = $course;
@@ -89,7 +89,7 @@ SQL;
             GROUP BY c.id
 SQL;
 
-        foreach ($DB->get_records($sql) as $data) {
+        foreach ($DB->get_records_sql($sql) as $data) {
             $content[$data->courseid]->modules = $data->cnt;
             $content[$data->courseid]->distinct_modules = $data->cnt2;
         }
@@ -103,7 +103,7 @@ SQL;
             GROUP BY c.id
 SQL;
 
-        foreach ($DB->get_records($sql) as $data) {
+        foreach ($DB->get_records_sql($sql) as $data) {
             $content[$data->courseid]->sections = $data->cnt;
             $content[$data->courseid]->section_length = $data->len;
         }
