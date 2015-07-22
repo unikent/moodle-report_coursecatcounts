@@ -47,4 +47,15 @@ class core
             yield new category($category);
         }
     }
+
+    /**
+     * Returns a category.
+     */
+    public function get_category($id) {
+        global $DB;
+
+        return new category($DB->get_record('course_categories', array(
+            'id' => $id
+        )));
+    }
 }

@@ -363,19 +363,19 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
         $table->attributes['class'] = 'admintable generaltable';
         $table->data = array();
 
-        $report = new \report_coursecatcounts\category_report();
-        $data = $report->get_category_data($categoryid);
-        foreach ($data as $row) {
-            $course = \html_writer::tag('a', $row->shortname, array(
+        $report = new \report_coursecatcounts\core();
+        $category = $report->get_category($categoryid);
+        foreach ($category->get_courses() as $course) {
+            $courselink = \html_writer::tag('a', $course->shortname, array(
                 'href' => new \moodle_url('/course/view.php', array(
-                    'id' => $row->id
+                    'id' => $course->id
                 )),
                 'target' => '_blank'
             ));
 
             $table->data[] = new html_table_row(array(
-                new html_table_cell($course),
-                new html_table_cell($row->status)
+                new html_table_cell($courselink),
+                new html_table_cell($course->get_state(true))
             ));
         }
 

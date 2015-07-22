@@ -32,18 +32,18 @@ defined('MOODLE_INTERNAL') || die();
  */
 class course
 {
+    use \local_kent\traits\datapod;
+
     const STATUS_ACTIVE = 0;
     const STATUS_RESTING = 1;
     const STATUS_EMPTY = 2;
     const STATUS_UNUSED = 4;
 
-    private $_data;
-
     /**
      * Constructor.
      */
     public function __construct($data) {
-        $this->_data = $data;
+        $this->set_data($data);
     }
 
     /**
@@ -55,7 +55,7 @@ class course
         $cachekey = 'coursefastinfo';
         $cache = \cache::make('report_coursecatcounts', $cachekey);
         if ($content = $cache->get($cachekey)) {
-            return $content[$this->_data->id];
+            return $content[$this->id];
         }
 
         $content = array();
@@ -136,7 +136,7 @@ SQL;
 
         $cache->set($cachekey, $content);
 
-        return $content[$this->_data->id];
+        return $content[$this->id];
     }
 
     /**
@@ -146,22 +146,41 @@ SQL;
      *  - Empty: Has students but no content.
      *  - Unused: Has no students.
      */
-    public function get_state() {
+    public function get_state($astext = false) {
         $info = $this->get_fast_info();
 
+        $state = self::STATUS_ACTIVE;
         if ($info->enrolments == 0) {
-            return static::STATUS_UNUSED;
+            $state = self::STATUS_UNUSED;
+        } else if ($info->modules == 0 && $info->section_length == 0) {
+            $state = self::STATUS_EMPTY;
+        } else if (!$this->visible) {
+            $state = self::STATUS_RESTING;
         }
 
-        if ($info->modules == 0 && $info->section_length == 0) {
-            return static::STATUS_EMPTY;
+        if (!$astext) {
+            return $state;
         }
 
-        if (!$this->_data->visible) {
-            return static::STATUS_RESTING;
+        switch ($state) {
+            case self::STATUS_ACTIVE:
+                $state = 'active';
+            break;
+
+            case self::STATUS_RESTING:
+                $state = 'resting';
+            break;
+
+            case self::STATUS_EMPTY:
+                $state = 'empty';
+            break;
+
+            case self::STATUS_UNUSED:
+                $state = 'unused';
+            break;
         }
 
-        return static::STATUS_ACTIVE;
+        return $state;
     }
 
     /**
