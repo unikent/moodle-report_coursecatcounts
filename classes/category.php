@@ -77,6 +77,14 @@ SQL;
     }
 
     /**
+     * Returns a count of all courses within this category (or below).
+     */
+    public function count_courses() {
+        $courses = $this->get_courses();
+        return count($courses);
+    }
+
+    /**
      * Count all courses with a given state.
      */
     public function count_state($state) {

@@ -252,15 +252,14 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
         $table->data = array();
 
         $report = new \report_coursecatcounts\core();
-        $data = $report->get_categories();
-        foreach ($data as $category) {
+        foreach ($report->get_categories() as $category) {
             $link = \html_writer::link(new \moodle_url('/report/coursecatcounts/index.php', array(
                 'category' => $category->id,
                 'startdate' => $startdate,
                 'enddate' => $enddate
             )), str_pad($category->name, substr_count($category->path, 1), '-'));
 
-            $totalfromcourse = new html_table_cell($category->total_from_course);
+            $totalfromcourse = new html_table_cell($category->count_courses());
             $totalfromcourse->attributes['class'] = 'datacell';
             $totalfromcourse->attributes['catid'] = $category->id;
             $totalfromcourse->attributes['column'] = 'total_from_course';
