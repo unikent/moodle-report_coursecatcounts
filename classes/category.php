@@ -61,7 +61,7 @@ class category
             SELECT c.*
             FROM {course} c
             INNER JOIN {course_categories} cc
-                ON cc.path LIKE :path OR cc.path LIKE :path2
+                ON c.category=cc.id AND (cc.path LIKE :path OR cc.path LIKE :path2)
             GROUP BY c.id
 SQL;
 
