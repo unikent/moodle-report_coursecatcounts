@@ -234,7 +234,7 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
      *
      * @return string HTML to output.
      */
-    public function beta_run_global_report($startdate, $enddate, $csvlink) {
+    public function beta_run_global_report($csvlink) {
         global $DB;
 
         $table = new html_table();
@@ -254,9 +254,7 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
         $report = new \report_coursecatcounts\core();
         foreach ($report->get_categories() as $category) {
             $link = \html_writer::link(new \moodle_url('/report/coursecatcounts/index.php', array(
-                'category' => $category->id,
-                'startdate' => $startdate,
-                'enddate' => $enddate
+                'category' => $category->id
             )), $category->name);
 
             $totalfromcourse = new html_table_cell($category->count_courses());
@@ -318,33 +316,31 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
      *
      * @return string HTML to output.
      */
-    public function beta_export_global_report($startdate, $enddate) {
+    public function beta_export_global_report() {
         $export = new \csv_export_writer();
-        $export->set_filename('Category-Report-' . $startdate . '-' . $enddate);
+        $export->set_filename('Category-Report');
         $export->add_data(array(
             'Category',
-            'Total From Course',
+            'Total',
             'Unused',
             'Active',
             'Resting',
             'Empty',
-            'Guest',
-            'Keyed'
+            'Guest Enabled',
+            'Guest Passworded'
         ));
 
-        $report = new \report_coursecatcounts\category_report();
-        $data = $report->get_global_data($startdate, $enddate);
-        foreach ($data as $row) {
-            $category = str_pad($row->name, substr_count($row->path, 1), '-');
+        $report = new \report_coursecatcounts\core();
+        foreach ($report->get_categories() as $category) {
             $export->add_data(array(
-                s($category),
-                s($row->total_from_course),
-                s($row->ceased),
-                s($row->active),
-                s($row->resting),
-                s($row->inactive),
-                s($row->guest),
-                s($row->keyed)
+                s($category->name),
+                s($category->count_courses()),
+                s($category->count_state(\report_coursecatcounts\course::STATUS_UNUSED)),
+                s($category->count_state(\report_coursecatcounts\course::STATUS_ACTIVE)),
+                s($category->count_state(\report_coursecatcounts\course::STATUS_RESTING)),
+                s($category->count_state(\report_coursecatcounts\course::STATUS_EMPTY)),
+                s($category->count_guest()),
+                s($category->count_guest_passwords())
             ));
         }
 
@@ -356,7 +352,7 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
      *
      * @return string HTML to output.
      */
-    public function beta_run_category_report($categoryid, $startdate, $enddate, $csvlink) {
+    public function beta_run_category_report($categoryid, $csvlink) {
         global $DB;
 
         $table = new html_table();
@@ -368,7 +364,7 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
         $table->data = array();
 
         $report = new \report_coursecatcounts\category_report();
-        $data = $report->get_category_data($categoryid, $startdate, $enddate);
+        $data = $report->get_category_data($categoryid);
         foreach ($data as $row) {
             $course = \html_writer::tag('a', $row->shortname, array(
                 'href' => new \moodle_url('/course/view.php', array(
@@ -395,16 +391,16 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
      *
      * @return string HTML to output.
      */
-    public function beta_export_category_report($categoryid, $startdate, $enddate) {
+    public function beta_export_category_report($categoryid) {
         $export = new \csv_export_writer();
-        $export->set_filename('Course-Report-' . $categoryid . '-' . $startdate . '-' . $enddate);
+        $export->set_filename('Course-Report-' . $categoryid);
         $export->add_data(array(
             'Course',
             'Status'
         ));
 
         $report = new \report_coursecatcounts\category_report();
-        $data = $report->get_category_data($categoryid, $startdate, $enddate);
+        $data = $report->get_category_data($categoryid);
         foreach ($data as $row) {
             $export->add_data(array(
                 s($row->shortname),
