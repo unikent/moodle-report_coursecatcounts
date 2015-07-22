@@ -245,8 +245,8 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
             'Active',
             'Resting',
             'Empty',
-            'Guest',
-            'Keyed'
+            'Guest Enabled',
+            'Guest Passworded'
         );
         $table->attributes['class'] = 'admintable generaltable';
         $table->data = array();
@@ -257,7 +257,7 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
                 'category' => $category->id,
                 'startdate' => $startdate,
                 'enddate' => $enddate
-            )), str_pad($category->name, substr_count($category->path, 1), '-'));
+            )), $category->name);
 
             $totalfromcourse = new html_table_cell($category->count_courses());
             $totalfromcourse->attributes['class'] = 'datacell';
@@ -291,8 +291,8 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
                 $active,
                 $resting,
                 $inactive,
-                new html_table_cell('TODO - guest'),
-                new html_table_cell('TODO - keyed')
+                new html_table_cell($category->count_guest()),
+                new html_table_cell($category->count_guest_passwords())
             ));
         }
 

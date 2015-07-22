@@ -100,4 +100,38 @@ SQL;
 
         return $total;
     }
+
+    /**
+     * Count all courses with guest access.
+     */
+    public function count_guest() {
+        $total = 0;
+
+        // Loop and count.
+        $courses = $this->get_courses();
+        foreach ($courses as $course) {
+            if ($course->is_guest_enabled()) {
+               $total++;
+            }
+        }
+
+        return $total;
+    }
+
+    /**
+     * Count all courses with guest access passworded.
+     */
+    public function count_guest_passwords() {
+        $total = 0;
+
+        // Loop and count.
+        $courses = $this->get_courses();
+        foreach ($courses as $course) {
+            if ($course->has_guest_password()) {
+               $total++;
+            }
+        }
+
+        return $total;
+    }
 }

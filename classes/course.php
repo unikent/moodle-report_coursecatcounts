@@ -55,7 +55,7 @@ class course
         $cachekey = 'coursefastinfo';
         $cache = \cache::make('report_coursecatcounts', $cachekey);
         if ($content = $cache->get($cachekey)) {
-            return $content;
+            return $content[$this->_data->id];
         }
 
         $content = array();
@@ -108,9 +108,35 @@ SQL;
             $content[$data->courseid]->section_length = $data->len;
         }
 
+        // Build enrol/guest info.
+        $sql = <<<SQL
+            SELECT
+                e.courseid,
+                SUM(
+                    CASE e.status WHEN 1
+                        THEN 1
+                        ELSE 0
+                    END
+                ) statcnt,
+                SUM(
+                    CASE WHEN e.password <> ''
+                        THEN 1
+                        ELSE 0
+                    END
+                ) keycnt
+            FROM {enrol} e
+                WHERE enrol = 'guest'
+            GROUP BY e.courseid
+SQL;
+
+        foreach ($DB->get_records_sql($sql) as $data) {
+            $content[$data->courseid]->guest_enabled = $data->statcnt > 0;
+            $content[$data->courseid]->guest_password = $data->keycnt > 0;
+        }
+
         $cache->set($cachekey, $content);
 
-        return $content;
+        return $content[$this->_data->id];
     }
 
     /**
@@ -122,7 +148,6 @@ SQL;
      */
     public function get_state() {
         $info = $this->get_fast_info();
-        $info = $info[$this->_data->id];
 
         if ($info->enrolments == 0) {
             return static::STATUS_UNUSED;
@@ -137,5 +162,21 @@ SQL;
         }
 
         return static::STATUS_ACTIVE;
+    }
+
+    /**
+     * Does this course have guest access enabled?
+     */
+    public function is_guest_enabled() {
+        $info = $this->get_fast_info();
+        return isset($info->guest_enabled) ? (bool)$info->guest_enabled : false;
+    }
+
+    /**
+     * Does this course have guest access passworded?
+     */
+    public function has_guest_password() {
+        $info = $this->get_fast_info();
+        return isset($info->guest_password) ? (bool)$info->guest_password : false;
     }
 }
