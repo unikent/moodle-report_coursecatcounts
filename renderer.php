@@ -284,6 +284,16 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
             $inactive->attributes['catid'] = $category->id;
             $inactive->attributes['column'] = 'inactive';
 
+            $guest = new html_table_cell($category->count_guest());
+            $guest->attributes['class'] = 'datacell';
+            $guest->attributes['catid'] = $category->id;
+            $guest->attributes['column'] = 'guest';
+
+            $guestpwd = new html_table_cell($category->count_guest_passwords());
+            $guestpwd->attributes['class'] = 'datacell';
+            $guestpwd->attributes['catid'] = $category->id;
+            $guestpwd->attributes['column'] = 'guestpwd';
+
             $table->data[] = new html_table_row(array(
                 new html_table_cell($link),
                 $totalfromcourse,
@@ -291,8 +301,8 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
                 $active,
                 $resting,
                 $inactive,
-                new html_table_cell($category->count_guest()),
-                new html_table_cell($category->count_guest_passwords())
+                $guest,
+                $guestpwd
             ));
         }
 
