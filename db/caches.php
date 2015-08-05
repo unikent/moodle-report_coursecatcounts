@@ -28,6 +28,7 @@ $definitions = array(
     ),
     'coursefastinfo' => array(
         'mode' => cache_store::MODE_APPLICATION,
-        'ttl'  => 14400
+        'ttl'  => 14400,
+        'simplekeys' => true
     )
 );

@@ -21,6 +21,7 @@ admin_externalpage_setup('coursecatcountsreport', '', null, '', array(
     'pagelayout' => 'report'
 ));
 
+$PAGE->set_url(new \moodle_url('/report/coursecatcounts/beta.php'));
 $PAGE->set_context(\context_system::instance());
 
 $category = optional_param('category', false, PARAM_INT);

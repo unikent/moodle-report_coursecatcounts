@@ -52,10 +52,9 @@ class course
     private function get_fast_info() {
         global $DB;
 
-        $cachekey = 'coursefastinfo';
-        $cache = \cache::make('report_coursecatcounts', $cachekey);
-        if ($content = $cache->get($cachekey)) {
-            return $content[$this->id];
+        $cache = \cache::make('report_coursecatcounts', 'coursefastinfo');
+        if ($content = $cache->get($this->id)) {
+            return $content;
         }
 
         $content = array();
@@ -134,7 +133,9 @@ SQL;
             $content[$data->courseid]->guest_password = $data->keycnt > 0;
         }
 
-        $cache->set($cachekey, $content);
+        foreach ($content as $id => $data) {
+            $cache->set($id, $data);
+        }
 
         return $content[$this->id];
     }
