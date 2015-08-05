@@ -21,6 +21,9 @@ require_once(dirname(__FILE__) . '/../../../config.php');
 $timenow = time();
 mtrace("Server Time: " . date('r', $timenow));
 
+$cache = \cache::make('report_coursecatcounts', 'coursefastinfo');
+$cache->purge();
+
 // Pre-generate the report caches.
 $report = new \report_coursecatcounts\core();
 foreach ($report->get_categories() as $category) {
