@@ -37,7 +37,7 @@ $sql = <<<SQL
 	GROUP BY c.id
 SQL;
 
-$cat = \local_catman\core::get_category();
+$cat = \tool_cat\recyclebin::get_category();
 $rs = $DB->get_recordset_sql($sql, array(
 	'cid' => $cat->id
 ));
