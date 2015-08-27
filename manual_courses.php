@@ -25,22 +25,18 @@ echo $OUTPUT->header();
 echo $OUTPUT->heading("Manual Course Report");
 
 $sql = <<<SQL
-	SELECT c.id, cat.name as category, c.shortname, c.fullname
-	FROM {course} c
-	INNER JOIN {course_categories} cat
-		ON cat.id = c.category
-		AND cat.id <> :cid
-		AND cat.id <> 0
-	LEFT OUTER JOIN {connect_course} cc
-		ON cc.mid=c.id
-	WHERE cc.id IS NULL
-	GROUP BY c.id
+    SELECT c.id, cat.name as category, c.shortname, c.fullname
+    FROM {course} c
+    INNER JOIN {course_categories} cat
+        ON cat.id = c.category
+        AND cat.id <> 0
+    LEFT OUTER JOIN {connect_course} cc
+        ON cc.mid=c.id
+    WHERE cc.id IS NULL
+    GROUP BY c.id
 SQL;
 
-$cat = \tool_cat\recyclebin::get_category();
-$rs = $DB->get_recordset_sql($sql, array(
-	'cid' => $cat->id
-));
+$rs = $DB->get_recordset_sql($sql);
 
 $table = new \html_table();
 $table->head = array("Course", "Category");
@@ -48,20 +44,20 @@ $table->attributes['class'] = 'admintable generaltable';
 $table->data = array();
 
 foreach ($rs as $record) {
-	$courseurl = new \moodle_url('/course/view.php', array(
-		'id' => $record->id
-	));
+    $courseurl = new \moodle_url('/course/view.php', array(
+        'id' => $record->id
+    ));
     $coursecell = new html_table_cell(\html_writer::link($courseurl, "{$record->shortname}: {$record->fullname}"));
 
-	$table->data[] = array($coursecell, $record->category);
+    $table->data[] = array($coursecell, $record->category);
 }
 
 $rs->close();
 
 if (count($table->data) > 0) {
-	echo \html_writer::table($table);
+    echo \html_writer::table($table);
 } else {
-	echo \html_writer::tag('p', 'No manual courses found.');
+    echo \html_writer::tag('p', 'No manual courses found.');
 }
 
 echo $OUTPUT->footer();
