@@ -33,8 +33,6 @@ if ($data = $form->get_data()) {
 }
 
 $activity = optional_param('activity', '', PARAM_PLUGIN);
-$startdate = optional_param('start', 0, PARAM_INT);
-$enddate = optional_param('end', 0, PARAM_INT);
 $format = optional_param('format', 'screen', PARAM_ALPHA);
 $format = $format == 'csv' ? 'csv' : 'screen';
 $table = '';
@@ -169,10 +167,8 @@ if (!empty($activity)) {
     echo \html_writer::empty_tag('hr');
 }
 
-if ($startdate > 0 || $enddate > 0) {
-    echo $OUTPUT->heading('New Report', 4);
-}
 
+echo $OUTPUT->heading('New Report', 4);
 $form->display();
 
 echo $OUTPUT->footer();

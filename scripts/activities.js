@@ -2,13 +2,13 @@ M.report_activities = {
     Y : null,
     transaction : [],
 
-    init: function (Y, activity, startdate, enddate) {
+    init: function (Y, activity) {
         Y.all('.datacell').on('click', function (e) {
-            M.report_activities.cellClick(Y, e.target, activity, startdate, enddate);
+            M.report_activities.cellClick(Y, e.target, activity);
         });
     },
 
-    cellClick : function(Y, cell, activity, startdate, enddate) {
+    cellClick : function(Y, cell, activity) {
         var catid = cell.getAttribute("catid");
         var ctype = cell.getAttribute("column");
 
@@ -52,9 +52,7 @@ M.report_activities = {
                 sesskey: M.cfg.sesskey,
                 catid: catid,
                 ctype: ctype,
-                activity: activity,
-                startdate: startdate,
-                enddate: enddate
+                activity: activity
             },
             on: {
                 success: function (x, o) {
