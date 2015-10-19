@@ -312,14 +312,14 @@ SQL;
             'Category',
             'Total Modules',
             'Total Modules with activity',
-            'Ceased Modules',
-            'Ceased Modules with activity',
+            'Unused Modules',
+            'Unused Modules with activity',
             'Active Modules',
             'Active Modules with activity',
             'Resting Modules',
             'Resting Modules with activity',
-            'Inactive Modules',
-            'Inactive Modules with activity'
+            'Empty Modules',
+            'Empty Modules with activity'
         );
     }
 }
