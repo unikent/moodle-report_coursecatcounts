@@ -28,7 +28,6 @@ defined('MOODLE_INTERNAL') || die();
 
 /**
  * Report category.
- * *** Beta API ***
  *
  * @internal
  */

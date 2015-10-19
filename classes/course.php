@@ -28,7 +28,6 @@ defined('MOODLE_INTERNAL') || die();
 
 /**
  * Report course.
- * *** Beta API ***
  */
 class course
 {
