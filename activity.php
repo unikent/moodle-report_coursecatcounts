@@ -90,16 +90,16 @@ if (!empty($activity)) {
         die;
     } else {
         $countcolumns = array(
-            'total',
-            'total_activity_count',
-            'ceased',
-            'ceased_activity_count',
-            'active',
-            'active_activity_count',
-            'resting',
-            'resting_activity_count',
-            'inactive',
-            'inactive_activity_count'
+            'total' => '',
+            'total_activity_count' => '',
+            'ceased' => '',
+            'ceased_activity_count' => \report_coursecatcounts\course::STATUS_UNUSED,
+            'active' => '',
+            'active_activity_count' => \report_coursecatcounts\course::STATUS_ACTIVE,
+            'resting' => '',
+            'resting_activity_count' => \report_coursecatcounts\course::STATUS_RESTING,
+            'inactive' => '',
+            'inactive_activity_count' => \report_coursecatcounts\course::STATUS_EMPTY
         );
 
         $table = new \html_table();
@@ -118,10 +118,12 @@ if (!empty($activity)) {
                 new html_table_cell($category)
             );
 
-            foreach ($countcolumns as $column) {
+            foreach ($countcolumns as $column => $status) {
                 $cell = new html_table_cell($row->$column);
                 $cell->attributes['class'] = "datacell " . $column;
-                $cell->attributes['column'] = $column;
+                if ($status) {
+                    $cell->attributes['column'] = $status;
+                }
                 $cell->attributes['catid'] = $row->categoryid;
                 $columns[] = $cell;
             }
@@ -157,7 +159,6 @@ if (!empty($activity)) {
     echo \html_writer::table($table);
     echo \html_writer::empty_tag('hr');
 }
-
 
 echo $OUTPUT->heading('New Report', 4);
 
