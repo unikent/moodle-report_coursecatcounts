@@ -103,16 +103,6 @@ SQL;
     }
 
     /**
-     * Count all courses with a given state.
-     * @deprecated Use count_courses with $activity
-     */
-    public function count_state($state) {
-        debugging("Deprecated - use count_courses instead.");
-
-        return $this->count_courses($state);
-    }
-
-    /**
      * Count all courses with guest access.
      */
     public function count_guest() {

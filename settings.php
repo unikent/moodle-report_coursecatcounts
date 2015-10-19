@@ -38,6 +38,12 @@ $ADMIN->add('reports', new admin_externalpage(
 ));
 
 $ADMIN->add('reports', new admin_externalpage(
+    'courseturnitincountsreport',
+    'Category-Based Turnitin Counts',
+    new \moodle_url("/report/coursecatcounts/turnitin.php")
+));
+
+$ADMIN->add('reports', new admin_externalpage(
     'manualcoursereport',
     'Manual Courses',
     new \moodle_url("/report/coursecatcounts/manual_courses.php")
