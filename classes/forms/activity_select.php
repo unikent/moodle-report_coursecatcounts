@@ -26,7 +26,9 @@ namespace report_coursecatcounts\forms;
 
 defined('MOODLE_INTERNAL') || die();
 
-class activity_select extends date_select
+require_once($CFG->dirroot . '/lib/formslib.php');
+
+class activity_select extends \moodleform
 {
     /**
      * Form definition
@@ -37,12 +39,12 @@ class activity_select extends date_select
         $activities = array();
         $records = $DB->get_records('modules');
         foreach ($records as $record) {
-            $activities[$record->id] = $record->name;
+            $activities[$record->name] = get_string('modulename', $record->name);
         }
 
         $mform =& $this->_form;
-        $mform->addElement('select', 'activityid', 'Activity', $activities);
+        $mform->addElement('select', 'activity', 'Activity', $activities);
 
-        parent::definition();
+        $this->add_action_buttons(false, "Run Report");
     }
 }

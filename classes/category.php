@@ -28,7 +28,6 @@ defined('MOODLE_INTERNAL') || die();
 
 /**
  * Report category.
- * *** Beta API ***
  *
  * @internal
  */
@@ -48,7 +47,7 @@ class category
     /**
      * Returns a list of all courses within this category (or below).
      */
-    public function get_courses() {
+    public function get_courses($activity = null) {
         global $DB;
 
         if (isset($this->courses)) {
@@ -70,7 +69,10 @@ SQL;
             'path2' => "{$this->path}/%"
         ));
         foreach ($courses as $course) {
-            $data[] = new course($course);
+            $course = new course($course);
+            if (empty($activity) || $course->get_activity_count($activity) > 0) {
+                $data[] = $course;
+            }
         }
 
         $this->courses = $data;
@@ -81,23 +83,20 @@ SQL;
     /**
      * Returns a count of all courses within this category (or below).
      */
-    public function count_courses() {
+    public function count_courses($state = null, $activity = null) {
         $courses = $this->get_courses();
-        return count($courses);
-    }
 
-    /**
-     * Count all courses with a given state.
-     */
-    public function count_state($state) {
         $total = 0;
-
-        // Loop and count.
-        $courses = $this->get_courses();
         foreach ($courses as $course) {
-            if ($course->get_state() == $state) {
-               $total++;
+            if ($state && $course->get_state() !== $state) {
+                continue;
             }
+
+            if ($activity && $course->get_activity_count($activity) <= 0) {
+                continue;
+            }
+
+            $total++;
         }
 
         return $total;

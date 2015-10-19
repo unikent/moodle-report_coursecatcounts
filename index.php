@@ -21,30 +21,19 @@ admin_externalpage_setup('coursecatcountsreport', '', null, '', array(
     'pagelayout' => 'report'
 ));
 
+$PAGE->set_url(new \moodle_url('/report/coursecatcounts/index.php'));
 $PAGE->set_context(\context_system::instance());
 
 $category = optional_param('category', false, PARAM_INT);
-$startdate = optional_param('start', 0, PARAM_INT);
-$enddate = optional_param('end', 0, PARAM_INT);
 $format = optional_param('format', 'screen', PARAM_ALPHA);
 if ($format != 'csv') {
     $format = 'screen';
 }
 
-$form = new \report_coursecatcounts\forms\date_select();
-
-// Grab form values if we have any.
-if (!$category && $data = $form->get_data()) {
-    redirect(new \moodle_url('/report/coursecatcounts/index.php', array(
-        'start' => $data->startdate,
-        'end' => $data->enddate
-    )));
-}
-
 $renderer = $PAGE->get_renderer('report_coursecatcounts');
 
 if ($format == 'screen') {
-    $PAGE->requires->js_init_call('M.report_categories.init', array($startdate, $enddate), false, array(
+    $PAGE->requires->js_init_call('M.report_categories.init', array(), false, array(
         'name' => 'report_coursecatcounts',
         'fullpath' => '/report/coursecatcounts/scripts/categories.js'
     ));
@@ -53,62 +42,41 @@ if ($format == 'screen') {
     echo $OUTPUT->heading("Category-Based Course Report");
 }
 
-// Check the form was not submitted this time around.
-if (!$form->is_submitted()) {
-    $urlparams = array(
-        'start' => $startdate,
-        'end' => $enddate
-    );
-
-    // If we dont have a start date or an end date, we cannot continue.
-    if (($startdate == 0 && $enddate == 0) || $startdate < $enddate) {
-        // Output to CSV.
-        if ($format == 'csv') {
-            if (!$category) {
-                echo $renderer->export_global_report($startdate, $enddate);
-            } else {
-                echo $renderer->export_category_report($category, $startdate, $enddate);
-            }
-            die;
-        }
-
-        // Output to screen.
-        if ($format == 'screen') {
-            // Download as CSV link.
-            $csvlink = \html_writer::tag('a', 'Download as CSV', array(
-                'href' => new \moodle_url('/report/coursecatcounts/index.php', array_merge($urlparams, array(
-                    'category' => $category,
-                    'format' => 'csv'
-                ))),
-                'style' => 'float: right'
-            ));
-
-            if (!$category) {
-                echo $renderer->run_global_report($startdate, $enddate, $csvlink);
-            } else {
-                echo $renderer->run_category_report($category, $startdate, $enddate, $csvlink);
-            }
-
-            // Show a back link for category view.
-            if ($category) {
-                echo \html_writer::tag('a', 'Back', array(
-                    'href' => new \moodle_url('/report/coursecatcounts/index.php', $urlparams)
-                ));
-            } else {
-                echo\html_writer::empty_tag('hr');
-            }
-        }
-
-        // Update dates in form.
-        if ($startdate > 0) {
-            $form->set_from_time($startdate, $enddate);
-        }
+// Output to CSV.
+if ($format == 'csv') {
+    if (!$category) {
+        echo $renderer->export_global_report();
+    } else {
+        echo $renderer->export_category_report($category);
     }
+    die;
 }
 
-if (!$category) {
-    echo $OUTPUT->heading('New Report', 4);
-    $form->display();
+// Output to screen.
+if ($format == 'screen') {
+    // Download as CSV link.
+    $csvlink = \html_writer::tag('a', 'Download as CSV', array(
+        'href' => new \moodle_url('/report/coursecatcounts/index.php', array(
+            'category' => $category,
+            'format' => 'csv'
+        )),
+        'style' => 'float: right'
+    ));
+
+    if (!$category) {
+        echo $renderer->run_global_report($csvlink);
+    } else {
+        echo $renderer->run_category_report($category, $csvlink);
+    }
+
+    // Show a back link for category view.
+    if ($category) {
+        echo \html_writer::tag('a', 'Back', array(
+            'href' => new \moodle_url('/report/coursecatcounts/index.php')
+        ));
+    } else {
+        echo\html_writer::empty_tag('hr');
+    }
 }
 
 echo $OUTPUT->footer();

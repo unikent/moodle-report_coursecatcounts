@@ -27,10 +27,7 @@ namespace report_coursecatcounts;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Report core
- * TODO - Maybe run once per day and save the result?
- *
- * *** Beta API ***
+ * Report core.
  */
 class core
 {

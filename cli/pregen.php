@@ -31,10 +31,10 @@ foreach ($report->get_categories() as $category) {
     mtrace(" -> Processing category {$category->id}");
 
     $category->count_courses();
-    $category->count_state(\report_coursecatcounts\course::STATUS_UNUSED);
-    $category->count_state(\report_coursecatcounts\course::STATUS_ACTIVE);
-    $category->count_state(\report_coursecatcounts\course::STATUS_RESTING);
-    $category->count_state(\report_coursecatcounts\course::STATUS_EMPTY);
+    $category->count_courses(\report_coursecatcounts\course::STATUS_UNUSED);
+    $category->count_courses(\report_coursecatcounts\course::STATUS_ACTIVE);
+    $category->count_courses(\report_coursecatcounts\course::STATUS_RESTING);
+    $category->count_courses(\report_coursecatcounts\course::STATUS_EMPTY);
     $category->count_guest();
     $category->count_guest_passwords();
 

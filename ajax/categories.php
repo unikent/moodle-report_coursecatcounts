@@ -18,14 +18,16 @@ define('AJAX_SCRIPT', true);
 
 require_once(dirname(__FILE__) . '/../../../config.php');
 
-if (!has_capability('moodle/site:config', \context_system::instance())) {
+require_login();
+
+$context = \context_system::instance();
+$PAGE->set_context($context);
+if (!has_capability('moodle/site:config', $context)) {
     print_error("Not allowed!");
 }
 
-$catid = required_param('catid', PARAM_INT);
-$ctype = required_param('ctype', PARAM_ALPHAEXT);
-$startdate = required_param('startdate', PARAM_INT);
-$enddate = required_param('enddate', PARAM_INT);
+$categoryid = required_param('catid', PARAM_INT);
+$ctype = optional_param('ctype', null, PARAM_INT);
 
 $table = new \html_table();
 $table->head = array(
@@ -35,52 +37,25 @@ $table->head = array(
     "Unique Activity Count"
 );
 
-$report = new \report_coursecatcounts\category_report();
-$data = $report->get_category_data($catid, $startdate, $enddate);
-
-foreach ($data as $row) {
-    $valid = false;
-
-    switch ($ctype) {
-        case 'total_from_course':
-            $valid = true;
-        break;
-
-        case 'ceased':
-            $valid = $row->status == 'ceased';
-        break;
-
-        case 'total':
-            $valid = $row->status != 'ceased';
-        break;
-
-        case 'active':
-            $valid = $row->status == 'active';
-        break;
-
-        case 'resting':
-            $valid = $row->status == 'resting';
-        break;
-
-        case 'inactive':
-            $valid = $row->status == 'inactive';
-        break;
+$report = new \report_coursecatcounts\core();
+$category = $report->get_category($categoryid);
+foreach ($category->get_courses() as $course) {
+    if ($ctype && $ctype !== $course->get_state()) {
+        continue;
     }
 
-    if ($valid) {
-        $course = \html_writer::tag('a', $row->shortname, array(
-            'href' => new \moodle_url('/course/view.php', array(
-                'id' => $row->id
-            )),
-            'target' => '_blank'
-        ));
-        $table->data[] = new html_table_row(array(
-            $course,
-            $row->student_count,
-            $row->activity_count,
-            $row->unique_activity_count
-        ));
-    }
+    $link = \html_writer::tag('a', $course->shortname, array(
+        'href' => new \moodle_url('/course/view.php', array(
+            'id' => $course->id
+        )),
+        'target' => '_blank'
+    ));
+    $table->data[] = new html_table_row(array(
+        $link,
+        $course->get_student_count(),
+        $course->get_activity_count(),
+        $course->get_distinct_activity_count()
+    ));
 }
 
 echo $OUTPUT->header();
