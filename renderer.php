@@ -65,22 +65,22 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
             $totalfromcourse->attributes['class'] = 'datacell';
             $totalfromcourse->attributes['catid'] = $category->id;
 
-            $ceased = new html_table_cell($category->count_state(\report_coursecatcounts\course::STATUS_UNUSED));
+            $ceased = new html_table_cell($category->count_courses(\report_coursecatcounts\course::STATUS_UNUSED));
             $ceased->attributes['class'] = 'datacell';
             $ceased->attributes['catid'] = $category->id;
             $ceased->attributes['column'] = \report_coursecatcounts\course::STATUS_UNUSED;
 
-            $active = new html_table_cell($category->count_state(\report_coursecatcounts\course::STATUS_ACTIVE));
+            $active = new html_table_cell($category->count_courses(\report_coursecatcounts\course::STATUS_ACTIVE));
             $active->attributes['class'] = 'datacell';
             $active->attributes['catid'] = $category->id;
             $active->attributes['column'] = \report_coursecatcounts\course::STATUS_ACTIVE;
 
-            $resting = new html_table_cell($category->count_state(\report_coursecatcounts\course::STATUS_RESTING));
+            $resting = new html_table_cell($category->count_courses(\report_coursecatcounts\course::STATUS_RESTING));
             $resting->attributes['class'] = 'datacell';
             $resting->attributes['catid'] = $category->id;
             $resting->attributes['column'] = \report_coursecatcounts\course::STATUS_RESTING;
 
-            $inactive = new html_table_cell($category->count_state(\report_coursecatcounts\course::STATUS_EMPTY));
+            $inactive = new html_table_cell($category->count_courses(\report_coursecatcounts\course::STATUS_EMPTY));
             $inactive->attributes['class'] = 'datacell';
             $inactive->attributes['catid'] = $category->id;
             $inactive->attributes['column'] = \report_coursecatcounts\course::STATUS_EMPTY;
@@ -136,10 +136,10 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
             $export->add_data(array(
                 s($category->name),
                 s($category->count_courses()),
-                s($category->count_state(\report_coursecatcounts\course::STATUS_UNUSED)),
-                s($category->count_state(\report_coursecatcounts\course::STATUS_ACTIVE)),
-                s($category->count_state(\report_coursecatcounts\course::STATUS_RESTING)),
-                s($category->count_state(\report_coursecatcounts\course::STATUS_EMPTY)),
+                s($category->count_courses(\report_coursecatcounts\course::STATUS_UNUSED)),
+                s($category->count_courses(\report_coursecatcounts\course::STATUS_ACTIVE)),
+                s($category->count_courses(\report_coursecatcounts\course::STATUS_RESTING)),
+                s($category->count_courses(\report_coursecatcounts\course::STATUS_EMPTY)),
                 s($category->count_guest()),
                 s($category->count_guest_passwords())
             ));

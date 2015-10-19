@@ -99,7 +99,7 @@ SQL;
             $total++;
         }
 
-        return count($courses);
+        return $total;
     }
 
     /**
@@ -107,17 +107,9 @@ SQL;
      * @deprecated Use count_courses with $activity
      */
     public function count_state($state) {
-        $total = 0;
+        debugging("Deprecated - use count_courses instead.");
 
-        // Loop and count.
-        $courses = $this->get_courses();
-        foreach ($courses as $course) {
-            if ($course->get_state() == $state) {
-               $total++;
-            }
-        }
-
-        return $total;
+        return $this->count_courses($state);
     }
 
     /**

@@ -23,16 +23,7 @@ admin_externalpage_setup('coursemodulecountsreport', '', null, '', array(
 
 $PAGE->set_context(\context_system::instance());
 
-$form = new \report_coursecatcounts\forms\activity_select();
-
-// Redirect if there is data.
-if ($data = $form->get_data()) {
-    redirect(new \moodle_url('/report/coursecatcounts/activity.php', array(
-        'activity' => $data->activityid
-    )));
-}
-
-$activity = optional_param('activity', '', PARAM_PLUGIN);
+$activity = optional_param('activity', null, PARAM_PLUGIN);
 $format = optional_param('format', 'screen', PARAM_ALPHA);
 $format = $format == 'csv' ? 'csv' : 'screen';
 $table = '';
@@ -169,6 +160,8 @@ if (!empty($activity)) {
 
 
 echo $OUTPUT->heading('New Report', 4);
+
+$form = new \report_coursecatcounts\forms\activity_select();
 $form->display();
 
 echo $OUTPUT->footer();

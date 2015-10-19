@@ -43,7 +43,7 @@ class activity_select extends \moodleform
         }
 
         $mform =& $this->_form;
-        $mform->addElement('select', 'activityid', 'Activity', $activities);
+        $mform->addElement('select', 'activity', 'Activity', $activities);
 
         $this->add_action_buttons(false, "Run Report");
     }
