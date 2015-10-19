@@ -30,13 +30,6 @@ if ($format != 'csv') {
     $format = 'screen';
 }
 
-$form = new \report_coursecatcounts\forms\date_select();
-
-// Grab form values if we have any.
-if (!$category && $data = $form->get_data()) {
-    redirect(new \moodle_url('/report/coursecatcounts/index.php'));
-}
-
 $renderer = $PAGE->get_renderer('report_coursecatcounts');
 
 if ($format == 'screen') {

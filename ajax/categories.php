@@ -27,7 +27,7 @@ if (!has_capability('moodle/site:config', $context)) {
 }
 
 $categoryid = required_param('catid', PARAM_INT);
-$ctype = optional_param('ctype', '', PARAM_INT);
+$ctype = optional_param('ctype', null, PARAM_INT);
 
 $table = new \html_table();
 $table->head = array(

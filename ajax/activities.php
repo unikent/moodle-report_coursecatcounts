@@ -18,15 +18,17 @@ define('AJAX_SCRIPT', true);
 
 require_once(dirname(__FILE__) . '/../../../config.php');
 
-if (!has_capability('moodle/site:config', \context_system::instance())) {
+require_login();
+
+$context = \context_system::instance();
+$PAGE->set_context($context);
+if (!has_capability('moodle/site:config', $context)) {
     print_error("Not allowed!");
 }
 
 $catid = required_param('catid', PARAM_INT);
-$ctype = required_param('ctype', PARAM_ALPHAEXT);
-$activity = required_param('activity', PARAM_INT);
-$startdate = required_param('startdate', PARAM_INT);
-$enddate = required_param('enddate', PARAM_INT);
+$ctype = optional_param('ctype', null, PARAM_INT);
+$activity = required_param('activity', PARAM_PLUGIN);
 
 $table = new \html_table();
 $table->head = array(
@@ -36,24 +38,25 @@ $table->head = array(
     "Unique Activity Count"
 );
 
-$report = new \report_coursecatcounts\activity_report($activity, $startdate, $enddate);
-$data = $report->get_modules_for_category($catid);
-
-foreach ($data as $row) {
-    if ($ctype == 'total' || $row->$ctype > 0) {
-        $course = \html_writer::tag('a', $row->shortname, array(
-            'href' => new \moodle_url('/course/view.php', array(
-                'id' => $row->id
-            )),
-            'target' => '_blank'
-        ));
-        $table->data[] = new html_table_row(array(
-            $course,
-            $row->student_count,
-            $row->activity_count,
-            $row->unique_activity_count
-        ));
+$report = new \report_coursecatcounts\core();
+$category = $report->get_category($catid);
+foreach ($category->get_courses($activity) as $course) {
+    if ($ctype && $ctype !== $course->get_state()) {
+        continue;
     }
+
+    $link = \html_writer::tag('a', $course->shortname, array(
+        'href' => new \moodle_url('/course/view.php', array(
+            'id' => $course->id
+        )),
+        'target' => '_blank'
+    ));
+    $table->data[] = new html_table_row(array(
+        $link,
+        $course->get_student_count(),
+        $course->get_activity_count(),
+        $course->get_distinct_activity_count()
+    ));
 }
 
 echo $OUTPUT->header();
