@@ -47,7 +47,7 @@ class category
     /**
      * Returns a list of all courses within this category (or below).
      */
-    public function get_courses() {
+    public function get_courses($activity = null) {
         global $DB;
 
         if (isset($this->courses)) {
@@ -69,7 +69,10 @@ SQL;
             'path2' => "{$this->path}/%"
         ));
         foreach ($courses as $course) {
-            $data[] = new course($course);
+            $course = new course($course);
+            if (empty($activity) || $course->get_activity_count($activity) > 0) {
+                $data[] = $course;
+            }
         }
 
         $this->courses = $data;

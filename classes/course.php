@@ -80,6 +80,25 @@ SQL;
 
         // Build course modules.
         $sql = <<<SQL
+            SELECT CONCAT(c.id, m.id) as id, c.id as courseid, m.id as moduleid, m.name, COALESCE(COUNT(cm.id), 0) cnt
+            FROM {course} c
+            LEFT OUTER JOIN {course_modules} cm
+                ON c.id = cm.course
+            LEFT OUTER JOIN {modules} m
+                ON m.id = cm.module
+            GROUP BY c.id, m.id
+SQL;
+
+        foreach ($DB->get_records_sql($sql) as $data) {
+            if (!isset($content[$data->courseid]->activities)) {
+                $content[$data->courseid]->activities = array();
+            }
+
+            $content[$data->courseid]->activities[$data->name] = $data->cnt;
+        }
+
+        // Build course module counts.
+        $sql = <<<SQL
             SELECT c.id as courseid, COALESCE(COUNT(cm.id), 0) cnt, COALESCE(COUNT(DISTINCT cm.module), 0) cnt2
             FROM {course} c
             LEFT OUTER JOIN {course_modules} cm
@@ -194,8 +213,12 @@ SQL;
     /**
      * Return activity count.
      */
-    public function get_activity_count() {
+    public function get_activity_count($activity = null) {
         $info = $this->get_fast_info();
+        if (!empty($activity)) {
+            return $info->activities[$activity];
+        }
+
         return $info->modules;
     }
 
