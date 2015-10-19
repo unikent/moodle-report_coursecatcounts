@@ -83,13 +83,28 @@ SQL;
     /**
      * Returns a count of all courses within this category (or below).
      */
-    public function count_courses() {
+    public function count_courses($state = null, $activity = null) {
         $courses = $this->get_courses();
+
+        $total = 0;
+        foreach ($courses as $course) {
+            if ($state && $course->get_state() !== $state) {
+                continue;
+            }
+
+            if ($activity && $course->get_activity_count($activity) <= 0) {
+                continue;
+            }
+
+            $total++;
+        }
+
         return count($courses);
     }
 
     /**
      * Count all courses with a given state.
+     * @deprecated Use count_courses with $activity
      */
     public function count_state($state) {
         $total = 0;

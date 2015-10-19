@@ -56,7 +56,18 @@ class course
             return $content;
         }
 
-        $content = array();
+        // Build course info and initialise.
+        $content = $DB->get_records('course');
+        foreach ($content as $id => $course) {
+            $content[$id]->enrolments = 0;
+            $content[$id]->activities = array();
+            $content[$id]->modules = 0;
+            $content[$id]->distinct_modules = 0;
+            $content[$id]->sections = 0;
+            $content[$id]->section_length = 0;
+            $content[$id]->guest_enabled = 0;
+            $content[$id]->guest_password = 0;
+        }
 
         // Build enrolments.
         $sql = <<<SQL
@@ -73,27 +84,21 @@ class course
 SQL;
 
         foreach ($DB->get_records_sql($sql) as $data) {
-            $course = new \stdClass();
-            $course->enrolments = $data->cnt;
-            $content[$data->courseid] = $course;
+            $content[$data->courseid]->enrolments = $data->cnt;
         }
 
         // Build course modules.
         $sql = <<<SQL
-            SELECT CONCAT(c.id, m.id) as id, c.id as courseid, m.id as moduleid, m.name, COALESCE(COUNT(cm.id), 0) cnt
+            SELECT CONCAT_WS('_', c.id, m.id) as id, c.id as courseid, m.id as moduleid, m.name, COALESCE(COUNT(cm.id), 0) cnt
             FROM {course} c
-            LEFT OUTER JOIN {course_modules} cm
+            INNER JOIN {course_modules} cm
                 ON c.id = cm.course
-            LEFT OUTER JOIN {modules} m
+            INNER JOIN {modules} m
                 ON m.id = cm.module
             GROUP BY c.id, m.id
 SQL;
 
         foreach ($DB->get_records_sql($sql) as $data) {
-            if (!isset($content[$data->courseid]->activities)) {
-                $content[$data->courseid]->activities = array();
-            }
-
             $content[$data->courseid]->activities[$data->name] = $data->cnt;
         }
 
@@ -216,7 +221,7 @@ SQL;
     public function get_activity_count($activity = null) {
         $info = $this->get_fast_info();
         if (!empty($activity)) {
-            return $info->activities[$activity];
+            return isset($info->activities[$activity]) ? $info->activities[$activity] : 0;
         }
 
         return $info->modules;

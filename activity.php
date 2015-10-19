@@ -28,35 +28,60 @@ $form = new \report_coursecatcounts\forms\activity_select();
 // Redirect if there is data.
 if ($data = $form->get_data()) {
     redirect(new \moodle_url('/report/coursecatcounts/activity.php', array(
-        'activity' => $data->activityid,
-        'start' => $data->startdate,
-        'end' => $data->enddate
+        'activity' => $data->activityid
     )));
 }
 
-$activity = optional_param('activity', 0, PARAM_INT);
+$activity = optional_param('activity', '', PARAM_PLUGIN);
 $startdate = optional_param('start', 0, PARAM_INT);
 $enddate = optional_param('end', 0, PARAM_INT);
 $format = optional_param('format', 'screen', PARAM_ALPHA);
 $format = $format == 'csv' ? 'csv' : 'screen';
 $table = '';
 
-if ($activity > 0) {
-    $activityname = $DB->get_field('modules', 'name', array(
-        'id' => $activity
-    ));
-
-    $report = new \report_coursecatcounts\activity_report($activity, $startdate, $enddate);
-    $data = $report->get_data();
+if (!empty($activity)) {
+    $data = array();
+    $report = new \report_coursecatcounts\core();
+    foreach ($report->get_categories() as $category) {
+        $data[] = (object)array(
+            'categoryid' => $category->id,
+            'name' => $category->name,
+            'path' => $category->path,
+            'total' => $category->count_courses(),
+            'total_activity_count' => $category->count_courses(null, $activity),
+            'ceased' => $category->count_courses(\report_coursecatcounts\course::STATUS_UNUSED),
+            'ceased_activity_count' => $category->count_courses(\report_coursecatcounts\course::STATUS_UNUSED, $activity),
+            'active' => $category->count_courses(\report_coursecatcounts\course::STATUS_ACTIVE),
+            'active_activity_count' => $category->count_courses(\report_coursecatcounts\course::STATUS_ACTIVE, $activity),
+            'resting' => $category->count_courses(\report_coursecatcounts\course::STATUS_RESTING),
+            'resting_activity_count' => $category->count_courses(\report_coursecatcounts\course::STATUS_RESTING, $activity),
+            'inactive' => $category->count_courses(\report_coursecatcounts\course::STATUS_EMPTY),
+            'inactive_activity_count' => $category->count_courses(\report_coursecatcounts\course::STATUS_EMPTY, $activity)
+        );
+    }
 
     // Run CSV.
+    $headings = array(
+        'Category',
+        'Total Modules',
+        'Total Modules with activity',
+        'Unused Modules',
+        'Unused Modules with activity',
+        'Active Modules',
+        'Active Modules with activity',
+        'Resting Modules',
+        'Resting Modules with activity',
+        'Empty Modules',
+        'Empty Modules with activity'
+    );
+
     if ($format == 'csv') {
         require_once($CFG->libdir . '/csvlib.class.php');
 
         $export = new \csv_export_writer();
-        $export->set_filename('Activity-Report-' . $activityname . '-' . $startdate . '-' . $enddate);
+        $export->set_filename('Activity-Report-' . $activityname . '-' . strftime(get_string('strftimedatefullshort', 'core_langconfig')));
         $export->add_data(array("Report for '{$activityname}' activity."));
-        $export->add_data($report->get_headings());
+        $export->add_data($headings);
         foreach ($data as $row) {
             $export->add_data(array(
                 $row->name,
@@ -89,7 +114,7 @@ if ($activity > 0) {
         );
 
         $table = new \html_table();
-        $table->head = $report->get_headings();
+        $table->head = $headings;
         $table->attributes['class'] = 'admintable generaltable';
         $table->data = array();
         foreach ($data as $row) {
@@ -121,8 +146,6 @@ if ($activity > 0) {
         $csvlink = \html_writer::tag('a', 'Download as CSV', array(
             'href' => new \moodle_url('/report/coursecatcounts/activity.php', array(
                 'activity' => $activity,
-                'start' => $startdate,
-                'end' => $enddate,
                 'format' => 'csv'
             )),
             'style' => 'float: right'
@@ -133,7 +156,7 @@ if ($activity > 0) {
     }
 }
 
-$PAGE->requires->js_init_call('M.report_activities.init', array($activity, $startdate, $enddate), false, array(
+$PAGE->requires->js_init_call('M.report_activities.init', array($activity), false, array(
     'name' => 'report_coursecatcounts',
     'fullpath' => '/report/coursecatcounts/scripts/activities.js'
 ));
@@ -141,15 +164,13 @@ $PAGE->requires->js_init_call('M.report_activities.init', array($activity, $star
 echo $OUTPUT->header();
 echo $OUTPUT->heading("Category-Based Activity Report");
 
-if ($activity > 0) {
+if (!empty($activity)) {
     echo \html_writer::table($table);
     echo \html_writer::empty_tag('hr');
 }
 
 if ($startdate > 0 || $enddate > 0) {
     echo $OUTPUT->heading('New Report', 4);
-
-    $form->set_from_time($startdate, $enddate);
 }
 
 $form->display();
