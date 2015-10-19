@@ -184,6 +184,30 @@ SQL;
     }
 
     /**
+     * Return student count.
+     */
+    public function get_student_count() {
+        $info = $this->get_fast_info();
+        return $info->enrolments;
+    }
+
+    /**
+     * Return activity count.
+     */
+    public function get_activity_count() {
+        $info = $this->get_fast_info();
+        return $info->modules;
+    }
+
+    /**
+     * Return distinct activity count.
+     */
+    public function get_distinct_activity_count() {
+        $info = $this->get_fast_info();
+        return $info->distinct_modules;
+    }
+
+    /**
      * Does this course have guest access enabled?
      */
     public function is_guest_enabled() {

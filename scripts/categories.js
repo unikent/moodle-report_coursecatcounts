@@ -2,17 +2,17 @@ M.report_categories = {
     Y : null,
     transaction : [],
 
-    init: function (Y, startdate, enddate) {
+    init: function (Y) {
         Y.all('.datacell').on('click', function (e) {
-            M.report_categories.cellClick(Y, e.target, startdate, enddate);
+            M.report_categories.cellClick(Y, e.target);
         });
     },
 
-    cellClick : function(Y, cell, startdate, enddate) {
+    cellClick : function(Y, cell) {
         var catid = cell.getAttribute("catid");
         var ctype = cell.getAttribute("column");
 
-        if (!catid || !ctype) {
+        if (!catid) {
             return;
         }
 
@@ -51,9 +51,7 @@ M.report_categories = {
             data: {
                 sesskey: M.cfg.sesskey,
                 catid: catid,
-                ctype: ctype,
-                startdate: startdate,
-                enddate: enddate
+                ctype: ctype
             },
             on: {
                 success: function (x, o) {

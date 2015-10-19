@@ -40,6 +40,11 @@ if (!$category && $data = $form->get_data()) {
 $renderer = $PAGE->get_renderer('report_coursecatcounts');
 
 if ($format == 'screen') {
+    $PAGE->requires->js_init_call('M.report_categories.init', array(), false, array(
+        'name' => 'report_coursecatcounts',
+        'fullpath' => '/report/coursecatcounts/scripts/categories.js'
+    ));
+
     echo $OUTPUT->header();
     echo $OUTPUT->heading("Category-Based Course Report");
 }
