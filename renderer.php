@@ -203,12 +203,12 @@ class report_coursecatcounts_renderer extends plugin_renderer_base {
             'Status'
         ));
 
-        $report = new \report_coursecatcounts\category_report();
-        $data = $report->get_category_data($categoryid);
-        foreach ($data as $row) {
+        $report = new \report_coursecatcounts\core();
+        $category = $report->get_category($categoryid);
+        foreach ($category->get_courses() as $course) {
             $export->add_data(array(
-                s($row->shortname),
-                s($row->status)
+                s($course->shortname),
+                s($course->get_state(true))
             ));
         }
 
