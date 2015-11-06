@@ -60,6 +60,8 @@ class course
         $content = $DB->get_records('course');
         foreach ($content as $id => $course) {
             $content[$id]->enrolments = 0;
+            $content[$id]->sdsenrolments = 0;
+            $content[$id]->blocks = array();
             $content[$id]->activities = array();
             $content[$id]->modules = 0;
             $content[$id]->distinct_modules = 0;
@@ -71,20 +73,21 @@ class course
 
         // Build enrolments.
         $sql = <<<SQL
-            SELECT c.id as courseid, COALESCE(COUNT(ra.id), 0) cnt
+            SELECT c.id as courseid, COALESCE(COUNT(ra.id), 0) cnt, COALESCE(SUM(CASE WHEN r.shortname = 'sds_student' THEN 1 ELSE 0 END), 0) cnt2
             FROM {course} c
             INNER JOIN {context} ctx
                     ON ctx.instanceid = c.id
                     AND ctx.contextlevel = 50
-            LEFT OUTER JOIN {role_assignments} ra
+            INNER JOIN {role_assignments} ra
                     ON ra.contextid = ctx.id
-            LEFT OUTER JOIN {role} r
+            INNER JOIN {role} r
                     ON ra.roleid = r.id AND r.shortname IN ('student', 'sds_student')
             GROUP BY c.id
 SQL;
 
         foreach ($DB->get_records_sql($sql) as $data) {
             $content[$data->courseid]->enrolments = $data->cnt;
+            $content[$data->courseid]->sdsenrolments = $data->cnt2;
         }
 
         // Build course modules.
@@ -114,6 +117,21 @@ SQL;
         foreach ($DB->get_records_sql($sql) as $data) {
             $content[$data->courseid]->modules = $data->cnt;
             $content[$data->courseid]->distinct_modules = $data->cnt2;
+        }
+
+        // Build block info.
+        $sql = <<<SQL
+            SELECT CONCAT_WS('_', c.id, bi.blockname) as id, c.id as courseid, bi.blockname as name, COALESCE(COUNT(bi.id), 0) cnt
+            FROM {course} c
+            INNER JOIN {context} ctx
+                ON ctx.instanceid = c.id AND ctx.contextlevel = ?
+            INNER JOIN {block_instances} bi
+                ON bi.parentcontextid = ctx.id
+            GROUP BY c.id, bi.blockname
+SQL;
+
+        foreach ($DB->get_records_sql($sql, array(\CONTEXT_COURSE)) as $data) {
+            $content[$data->courseid]->blocks[$data->name] = $data->cnt;
         }
 
         // Build section info.
@@ -210,8 +228,17 @@ SQL;
     /**
      * Return student count.
      */
-    public function get_student_count() {
+    public function get_student_count($type = 'any') {
         $info = $this->get_fast_info();
+
+        if ($type == 'sds') {
+            return $info->sdsenrolments;
+        }
+
+        if ($type == 'manual') {
+            return $info->enrolments - $info->sdsenrolments;
+        }
+
         return $info->enrolments;
     }
 
@@ -249,5 +276,23 @@ SQL;
     public function has_guest_password() {
         $info = $this->get_fast_info();
         return isset($info->guest_password) ? (bool)$info->guest_password : false;
+    }
+
+    /**
+     * Return block counts.
+     */
+    public function get_block_count($block = null) {
+        $info = $this->get_fast_info();
+
+        if (!empty($block)) {
+            return isset($info->blocks[$block]) ? $info->blocks[$block] : 0;
+        }
+
+        $total = 0;
+        foreach ($info->blocks as $block => $count) {
+            $total += $count;
+        }
+
+        return $total;
     }
 }
