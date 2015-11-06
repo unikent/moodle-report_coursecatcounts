@@ -334,4 +334,29 @@ SQL;
         $info = $this->get_fast_info();
         return $info->turnitingrades;
     }
+
+    /**
+     * Count panopto recordings.
+     */
+    public function count_panopto_recordings() {
+        global $CFG;
+
+        $cache = \cache::make('report_coursecatcounts', 'coursefastinfo');
+        if ($content = $cache->get("{$this->id}_panopto")) {
+            return $content;
+        }
+
+        require_once($CFG->dirroot . "/blocks/panopto/lib/panopto_data.php");
+
+        try {
+            $panoptodata = new \panopto_data($this->id);
+            $livesessions = count($panoptodata->get_live_sessions());
+        } catch (\Exception $e) {
+            $livesessions = 0;
+        }
+
+        $cache->set("{$this->id}_panopto", $livesessions);
+
+        return $livesessions;
+    }
 }

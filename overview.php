@@ -61,13 +61,20 @@ foreach ($report->get_categories() as $category) {
             'id' => $course->id
         )), $course->shortname);
 
+        $panoptoblocks = $course->get_block_count('panopto');
+        if ($panoptoblocks > 0) {
+            $panoptoblocks  = 'Yes (' . $course->count_panopto_recordings() . ' recordings)';
+        } else {
+            $panoptoblocks  = 'No';
+        }
+
         $table->add_data(array(
             $link,
             $category->name,
             $course->get_student_count() . ' (' . $course->get_student_count('sds') . '/' . $course->get_student_count('manual') . ')',
             $course->get_state(true),
             $course->get_activity_count('turnitintooltwo'),
-            $course->get_block_count('panopto'), // TODO - number of recordings.
+            $panoptoblocks,
             $course->is_grademark() ? 'Yes (' . $course->get_turnitin_grades() . ' grades)' : 'No',
             $course->get_activity_count('quiz')
         ), $course->id);
