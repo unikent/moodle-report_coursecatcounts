@@ -70,6 +70,7 @@ class course
             $content[$id]->guest_enabled = 0;
             $content[$id]->guest_password = 0;
             $content[$id]->turnitingrades = 0;
+            $content[$id]->turnitinsubmissions = 0;
         }
 
         // Build enrolments.
