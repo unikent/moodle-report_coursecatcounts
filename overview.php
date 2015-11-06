@@ -44,10 +44,6 @@ $table->define_headers(array(
 ));
 $table->setup();
 
-// text separate if poss                   From Moodle     No. – manual/SDS? Just SDS?     Active/resting/ceased/inactive      Yes/no      Yes/no                  Yes/no      Yes/no
-// (can separate code & title in Excel)                                                                                        Number?    (can add no. from KP)   Number?    Number?
-
-
 if (!$table->is_downloading()) {
     echo $OUTPUT->header();
     echo $OUTPUT->heading("Kent Overview Report");
@@ -71,8 +67,8 @@ foreach ($report->get_categories() as $category) {
             $course->get_student_count() . ' (' . $course->get_student_count('sds') . '/' . $course->get_student_count('manual') . ')',
             $course->get_state(true),
             $course->get_activity_count('turnitintooltwo'),
-            $course->get_block_count('panopto'),
-            'TODO',
+            $course->get_block_count('panopto'), // TODO - number of recordings.
+            $course->is_grademark() ? 'Yes (' . $course->get_turnitin_grades() . ' grades)' : 'No',
             $course->get_activity_count('quiz')
         ), $course->id);
 

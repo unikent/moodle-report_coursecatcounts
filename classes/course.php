@@ -69,6 +69,7 @@ class course
             $content[$id]->section_length = 0;
             $content[$id]->guest_enabled = 0;
             $content[$id]->guest_password = 0;
+            $content[$id]->turnitingrades = 0;
         }
 
         // Build enrolments.
@@ -174,6 +175,28 @@ SQL;
             $content[$data->courseid]->guest_password = $data->keycnt > 0;
         }
 
+        // Turnitin grades.
+        $sql = <<<SQL
+            SELECT
+                c.id AS courseid,
+                SUM(Case
+                    WHEN ts.submission_grade IS NOT NULL
+                    THEN 1
+                    ELSE 0
+                END) AS grades
+            FROM {course} c
+            INNER JOIN {turnitintooltwo} t
+                ON t.course = c.id
+            INNER JOIN {turnitintooltwo_submissions} ts
+                ON ts.turnitintooltwoid = t.id
+            GROUP BY c.id
+SQL;
+
+        foreach ($DB->get_records_sql($sql) as $data) {
+            $content[$data->courseid]->turnitingrades = $data->grades;
+        }
+
+        // Cache it all.
         foreach ($content as $id => $data) {
             $cache->set($id, $data);
         }
@@ -294,5 +317,21 @@ SQL;
         }
 
         return $total;
+    }
+
+    /**
+     * Returns true if the course is grademarked.
+     */
+    public function is_grademark() {
+        $info = $this->get_fast_info();
+        return $info->turnitingrades > 0;
+    }
+
+    /**
+     * Return number of turnitin grades.
+     */
+    public function get_turnitin_grades() {
+        $info = $this->get_fast_info();
+        return $info->turnitingrades;
     }
 }
