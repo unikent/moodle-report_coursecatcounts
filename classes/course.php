@@ -179,6 +179,7 @@ SQL;
         $sql = <<<SQL
             SELECT
                 c.id AS courseid,
+                COUNT(ts.id) as cnt,
                 SUM(Case
                     WHEN ts.submission_grade IS NOT NULL
                     THEN 1
@@ -193,6 +194,7 @@ SQL;
 SQL;
 
         foreach ($DB->get_records_sql($sql) as $data) {
+            $content[$data->courseid]->turnitinsubmissions = $data->cnt;
             $content[$data->courseid]->turnitingrades = $data->grades;
         }
 
@@ -333,6 +335,14 @@ SQL;
     public function get_turnitin_grades() {
         $info = $this->get_fast_info();
         return $info->turnitingrades;
+    }
+
+    /**
+     * Return number of turnitin submissions.
+     */
+    public function get_turnitin_submissions() {
+        $info = $this->get_fast_info();
+        return $info->turnitinsubmissions;
     }
 
     /**

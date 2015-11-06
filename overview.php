@@ -35,11 +35,12 @@ $table = new \local_kent\util\csvtable('kentoverviewreport');
 $table->define_headers(array(
     'Module code',
     'Category',
-    'No. of students enrolled (SDS/Manual)',
+    'No. of students enrolled',
     'Status',
-    'Tii assignments',
+    'Tii inboxes',
+    'Tii submissions',
+    'Tii grademark assignments',
     'KP block',
-    'Grademark assignments',
     'Quiz modules'
 ));
 $table->setup();
@@ -71,11 +72,12 @@ foreach ($report->get_categories() as $category) {
         $table->add_data(array(
             $link,
             $category->name,
-            $course->get_student_count() . ' (' . $course->get_student_count('sds') . '/' . $course->get_student_count('manual') . ')',
+            $course->get_student_count(),
             $course->get_state(true),
             $course->get_activity_count('turnitintooltwo'),
-            $panoptoblocks,
+            $course->get_turnitin_submissions(),
             $course->is_grademark() ? 'Yes (' . $course->get_turnitin_grades() . ' grades)' : 'No',
+            $panoptoblocks,
             $course->get_activity_count('quiz')
         ), $course->id);
 
