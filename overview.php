@@ -39,8 +39,10 @@ $table->define_headers(array(
     'Status',
     'Tii inboxes',
     'Tii submissions',
+    'Tii grademark inboxes',
     'Tii grademark assignments',
     'KP block',
+    'KP recordings',
     'Quiz modules'
 ));
 $table->setup();
@@ -62,22 +64,17 @@ foreach ($report->get_categories() as $category) {
             'id' => $course->id
         )), $course->shortname);
 
-        $panoptoblocks = $course->get_block_count('panopto');
-        if ($panoptoblocks > 0) {
-            $panoptoblocks  = 'Yes (' . $course->count_panopto_recordings() . ' recordings)';
-        } else {
-            $panoptoblocks  = 'No';
-        }
-
         $table->add_data(array(
             $link,
             $category->name,
             $course->get_student_count(),
             $course->get_state(true),
             $course->get_activity_count('turnitintooltwo'),
-            $course->get_turnitin_submissions(),
-            $course->is_grademark() ? 'Yes (' . $course->get_turnitin_grades() . ' grades)' : 'No',
-            $panoptoblocks,
+            $course->count_turnitin_submissions(),
+            $course->count_grademark_inboxes(),
+            $course->count_turnitin_grades(),
+            $course->get_block_count('panopto') > 0 ? 'Yes': 'No',
+            $course->count_panopto_recordings(),
             $course->get_activity_count('quiz')
         ), $course->id);
 

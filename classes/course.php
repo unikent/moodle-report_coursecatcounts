@@ -69,8 +69,7 @@ class course
             $content[$id]->section_length = 0;
             $content[$id]->guest_enabled = 0;
             $content[$id]->guest_password = 0;
-            $content[$id]->turnitingrades = 0;
-            $content[$id]->turnitinsubmissions = 0;
+            $content[$id]->turnitins = array();
         }
 
         // Build enrolments.
@@ -179,8 +178,10 @@ SQL;
         // Turnitin grades.
         $sql = <<<SQL
             SELECT
+                CONCAT_WS('_', c.id, t.id) as id, 
                 c.id AS courseid,
-                COUNT(ts.id) as cnt,
+                t.id as tiiid,
+                COUNT(ts.id) as submissions,
                 SUM(Case
                     WHEN ts.submission_grade IS NOT NULL
                     THEN 1
@@ -191,12 +192,14 @@ SQL;
                 ON t.course = c.id
             INNER JOIN {turnitintooltwo_submissions} ts
                 ON ts.turnitintooltwoid = t.id
-            GROUP BY c.id
+            GROUP BY c.id, t.id
 SQL;
 
         foreach ($DB->get_records_sql($sql) as $data) {
-            $content[$data->courseid]->turnitinsubmissions = $data->cnt;
-            $content[$data->courseid]->turnitingrades = $data->grades;
+            $content[$data->id]->turnitins = (object)array(
+                'submissions' => $data->submissions,
+                'grades' => $data->grades
+            );
         }
 
         // Cache it all.
@@ -323,27 +326,51 @@ SQL;
     }
 
     /**
-     * Returns true if the course is grademarked.
+     * Return number of turnitin grades.
      */
-    public function is_grademark() {
+    public function count_turnitin_grades() {
         $info = $this->get_fast_info();
-        return $info->turnitingrades > 0;
+        $total = 0;
+        foreach ($info->turnitins as $tii) {
+            $total += $tii->grades;
+        }
+
+        return $total;
     }
 
     /**
-     * Return number of turnitin grades.
+     * Returns true if the course is grademarked.
      */
-    public function get_turnitin_grades() {
-        $info = $this->get_fast_info();
-        return $info->turnitingrades;
+    public function is_grademark() {
+        return $this->count_turnitin_grades() > 0;
     }
 
     /**
      * Return number of turnitin submissions.
      */
-    public function get_turnitin_submissions() {
+    public function count_turnitin_submissions() {
         $info = $this->get_fast_info();
-        return $info->turnitinsubmissions;
+        $total = 0;
+        foreach ($info->turnitins as $tii) {
+            $total += $tii->submissions;
+        }
+
+        return $total;
+    }
+
+    /**
+     * Returns the number of inboxes that use grademark.
+     */
+    public function count_grademark_inboxes() {
+        $info = $this->get_fast_info();
+        $total = 0;
+        foreach ($info->turnitins as $tii) {
+            if ($tii->grades > 0) {
+                $total += 1;
+            }
+        }
+
+        return $total;
     }
 
     /**
