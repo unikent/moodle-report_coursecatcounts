@@ -49,4 +49,10 @@ $ADMIN->add('reports', new admin_externalpage(
     new \moodle_url("/report/coursecatcounts/manual_courses.php")
 ));
 
+$ADMIN->add('reports', new admin_externalpage(
+    'kentoverviewreport',
+    'Kent Overview',
+    new \moodle_url("/report/coursecatcounts/overview.php")
+));
+
 $settings = null;
