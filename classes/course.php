@@ -388,7 +388,7 @@ SQL;
 
         try {
             $panoptodata = new \panopto_data($this->id);
-            $livesessions = count($panoptodata->get_live_sessions());
+            $livesessions = count($panoptodata->get_completed_deliveries());
         } catch (\Exception $e) {
             $livesessions = 0;
         }
