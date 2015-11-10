@@ -64,6 +64,8 @@ foreach ($report->get_categories() as $category) {
             'id' => $course->id
         )), $course->shortname);
 
+        $panoptoblocks = $course->get_block_count('panopto');
+
         $table->add_data(array(
             $link,
             $category->name,
@@ -73,8 +75,8 @@ foreach ($report->get_categories() as $category) {
             $course->count_turnitin_submissions(),
             $course->count_grademark_inboxes(),
             $course->count_turnitin_grades(),
-            $course->get_block_count('panopto') > 0 ? 'Yes': 'No',
-            $course->count_panopto_recordings(),
+            $panoptoblocks > 0 ? 'Yes' : 'No',
+            $panoptoblocks > 0 ? $course->count_panopto_recordings() : 0,
             $course->get_activity_count('quiz')
         ), $course->id);
 
