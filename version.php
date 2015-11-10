@@ -16,6 +16,6 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-$plugin->version   = 2015101900;
+$plugin->version   = 2015111000;
 $plugin->requires  = 2013110500;
 $plugin->component = 'report_coursecatcounts';
