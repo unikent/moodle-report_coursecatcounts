@@ -33,10 +33,10 @@ class course
 {
     use \local_kent\traits\datapod;
 
-    const STATUS_ACTIVE = 0;
-    const STATUS_RESTING = 1;
-    const STATUS_EMPTY = 2;
-    const STATUS_UNUSED = 4;
+    const STATUS_ACTIVE = 1;
+    const STATUS_RESTING = 2;
+    const STATUS_EMPTY = 4;
+    const STATUS_UNUSED = 8;
 
     /**
      * Constructor.
