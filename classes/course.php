@@ -196,7 +196,7 @@ SQL;
 SQL;
 
         foreach ($DB->get_records_sql($sql) as $data) {
-            $content[$data->id]->turnitins = (object)array(
+            $content[$data->courseid]->turnitins = (object)array(
                 'submissions' => $data->submissions,
                 'grades' => $data->grades
             );
