@@ -70,7 +70,7 @@ foreach ($report->get_categories() as $category) {
         $panoptoblocks = $course->get_block_count('panopto');
 
         $table->add_data(array(
-            $link,
+            $table->is_downloading() ? $course->shortname : $link,
             $categories[$course->category],
             $course->get_student_count(),
             $course->get_state(true),
