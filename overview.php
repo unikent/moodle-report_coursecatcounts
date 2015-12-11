@@ -16,6 +16,7 @@
 
 require_once(dirname(__FILE__) . '/../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
+require_once($CFG->libdir . "/coursecatlib.php");
 
 admin_externalpage_setup('kentoverviewreport', '', null, '', array(
     'pagelayout' => 'report'
@@ -52,6 +53,8 @@ if (!$table->is_downloading()) {
     echo $OUTPUT->heading("Kent Overview Report");
 }
 
+$categories = \coursecat::make_categories_list();
+
 $done = array();
 $report = new \report_coursecatcounts\core();
 foreach ($report->get_categories() as $category) {
@@ -68,7 +71,7 @@ foreach ($report->get_categories() as $category) {
 
         $table->add_data(array(
             $link,
-            $category->name,
+            $categories[$course->category],
             $course->get_student_count(),
             $course->get_state(true),
             $course->get_activity_count('turnitintooltwo'),
