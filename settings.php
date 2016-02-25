@@ -25,8 +25,6 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-debugging("report_coursecatcounts is deprecated");
-
 $ADMIN->add('reports', new admin_externalpage(
     'coursecatcountsreport',
     'Category-Based Course Counts',
