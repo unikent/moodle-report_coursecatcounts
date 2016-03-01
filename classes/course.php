@@ -57,7 +57,12 @@ class course
         }
 
         // Build course info and initialise.
-        $content = $DB->get_records('course');
+        $content = $DB->get_records_sql('SELECT c.*, COUNT(cc.id) = 0 AS ismanual
+            FROM {course} c
+            LEFT OUTER JOIN {connect_course} cc ON cc.mid = c.id
+            GROUP BY c.id
+        ');
+
         foreach ($content as $id => $course) {
             $content[$id]->enrolments = 0;
             $content[$id]->sdsenrolments = 0;
@@ -178,7 +183,7 @@ SQL;
         // Turnitin grades.
         $sql = <<<SQL
             SELECT
-                CONCAT_WS('_', c.id, t.id) as id, 
+                CONCAT_WS('_', c.id, t.id) as id,
                 c.id AS courseid,
                 t.id as tiiid,
                 COUNT(ts.id) as submissions,
@@ -305,6 +310,14 @@ SQL;
     public function has_guest_password() {
         $info = $this->get_fast_info();
         return isset($info->guest_password) ? (bool)$info->guest_password : false;
+    }
+
+    /**
+     * Was this course manually created?
+     */
+    public function is_manual() {
+        $info = $this->get_fast_info();
+        return isset($info->ismanual) ? (bool)$info->ismanual : false;
     }
 
     /**

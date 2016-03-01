@@ -22,7 +22,9 @@ admin_externalpage_setup('kentoverviewreport', '', null, '', array(
     'pagelayout' => 'report'
 ));
 
-$PAGE->set_url(new \moodle_url('/report/coursecatcounts/overview.php'));
+$excludemanual = optional_param('excludemanual', false, PARAM_BOOL);
+
+$PAGE->set_url(new \moodle_url('/report/coursecatcounts/overview.php', array('excludemanual' => $excludemanual)));
 $PAGE->set_context(\context_system::instance());
 
 $category = optional_param('category', false, PARAM_INT);
@@ -49,8 +51,23 @@ $table->define_headers(array(
 $table->setup();
 
 if (!$table->is_downloading()) {
+    $PAGE->requires->js("/report/coursecatcounts/scripts/overview.js");
+
     echo $OUTPUT->header();
     echo $OUTPUT->heading("Kent Overview Report");
+
+    $tagparams = array(
+        'type' => 'checkbox',
+        'id' => 'excludemanual',
+        'name' => 'excludemanual',
+        'value' => true
+    );
+
+    if ($excludemanual) {
+        $tagparams['checked'] = 'checked';
+    }
+
+    echo \html_writer::empty_tag('input', $tagparams) . ' Exclude manual';
 }
 
 $categories = \coursecat::make_categories_list();
@@ -60,6 +77,12 @@ $report = new \report_coursecatcounts\core();
 foreach ($report->get_categories() as $category) {
     foreach ($category->get_courses() as $course) {
         if (in_array($course->shortname, $done)) {
+            continue;
+        }
+
+        $done[] = $course->shortname;
+
+        if ($excludemanual && $course->is_manual()) {
             continue;
         }
 
@@ -82,8 +105,6 @@ foreach ($report->get_categories() as $category) {
             $panoptoblocks > 0 ? $course->count_panopto_recordings() : 0,
             $course->get_activity_count('quiz')
         ), $course->id);
-
-        $done[] = $course->shortname;
     }
 }
 unset($done);
