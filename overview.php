@@ -107,7 +107,6 @@ foreach ($report->get_categories() as $category) {
         ), $course->id);
     }
 }
-unset($done);
 
 $table->finish_output();
 
